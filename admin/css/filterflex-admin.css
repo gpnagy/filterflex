@@ -1,0 +1,294 @@
+/* FilterFlex Admin Styles */
+
+/* General Metabox Structure */
+.filterflex-metabox-content .filterflex-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.filterflex-metabox-content .filterflex-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.filterflex-metabox-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.filterflex-metabox-content h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    font-weight: 600;
+}
+
+/* Location Rules */
+.filterflex-rule-group {
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+}
+
+.filterflex-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.filterflex-rule-row select,
+.filterflex-rule-row input[type="text"] {
+    flex-grow: 1;
+    max-width: 200px; /* Adjust as needed */
+}
+
+.filterflex-rule-row .button-link-delete {
+    margin-left: auto;
+    color: #a00;
+    text-decoration: none;
+}
+.filterflex-rule-row .button-link-delete:hover {
+    color: #dc3232;
+}
+
+/* Output Builder Section */
+.filterflex-output-builder-section .filterflex-output-builder-container {
+    display: flex;
+    gap: 20px;
+}
+
+.filterflex-available-tags {
+    flex: 0 0 200px; /* Fixed width for available tags */
+    border-right: 1px solid #ddd;
+    padding-right: 20px;
+}
+
+.filterflex-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.filterflex-tag-item {
+    display: inline-block;
+    background-color: #e0e0e0;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    user-select: none; /* Prevent text selection during drag */
+}
+
+.filterflex-available-tags .filterflex-tag-item.draggable-tag {
+    cursor: grab;
+}
+.filterflex-available-tags .filterflex-tag-item.draggable-tag:active {
+    cursor: grabbing;
+}
+
+
+.filterflex-available-tags .description {
+    font-size: 11px;
+    color: #666;
+    margin-top: 10px;
+}
+
+.filterflex-builder-area {
+    flex-grow: 1;
+}
+
+.filterflex-builder-input {
+    border: 1px solid #ddd;
+    padding: 10px;
+    min-height: 80px;
+    background-color: #fff;
+    margin-bottom: 15px;
+    display: flex; /* Use flexbox for inline items */
+    flex-wrap: wrap; /* Allow items to wrap */
+    align-items: center; /* Align items vertically */
+    gap: 5px; /* Spacing between items */
+}
+
+.filterflex-builder-input .filterflex-tag-item {
+    background-color: #cce5ff; /* Different color for tags in builder */
+    border-color: #99caff;
+    cursor: default; /* No grab cursor here */
+}
+
+.filterflex-builder-input .filterflex-static-text-input {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    font-size: 0.9em;
+    min-width: 100px; /* Minimum width */
+    flex-grow: 0; /* Don't grow excessively */
+    margin: 0 2px; /* Small margin */
+}
+
+/* Transformations Section */
+.filterflex-transformations {
+    margin-bottom: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+}
+
+#filterflex-transformations-container .filterflex-transformation-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background-color: #fdfdfd;
+    border: 1px solid #eee;
+}
+
+.filterflex-transformation-row select,
+.filterflex-transformation-row input[type="text"],
+.filterflex-transformation-row input[type="number"] {
+    /* Adjust widths as needed */
+}
+
+.filterflex-transformation-row .button-link-delete {
+    margin-left: auto;
+    color: #a00;
+    text-decoration: none;
+}
+.filterflex-transformation-row .button-link-delete:hover {
+    color: #dc3232;
+}
+
+
+/* Preview Area */
+.filterflex-preview-area {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+}
+
+.filterflex-preview-output {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 10px;
+    min-height: 40px;
+    font-style: italic;
+    color: #555;
+}
+
+/* Drag and Drop Highlighting */
+.filterflex-builder-input.drag-over {
+    border-color: #007cba;
+    box-shadow: 0 0 5px rgba(0, 124, 186, 0.5);
+}
+
+.filterflex-builder-item {
+    display: inline-flex; /* Use flex for items to align content */
+    align-items: center;
+    padding: 3px 6px;
+    margin: 2px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: grab; /* Indicate draggable */
+    vertical-align: middle; /* Align items nicely in a line */
+}
+
+.filterflex-builder-item.filterflex-tag-item { /* Specific styling for tags */
+    background-color: #d0e4fe;
+    border-color: #a6c9f7;
+}
+
+/* === NEW STYLES for Text Input Wrapper === */
+.filterflex-builder-item.filterflex-text-input-wrapper {
+    /* Inherits display: inline-flex, align-items: center, vertical-align: middle */
+    background-color: #fff; /* Give it a distinct background */
+    border: 1px solid #b0b0b0; /* Match input border */
+    padding: 0; /* Remove outer padding, input will have padding */
+}
+
+.filterflex-text-input-wrapper .filterflex-static-text-input {
+    border: none; /* Remove input's own border */
+    padding: 3px 5px; /* Internal padding for text */
+    margin: 0;
+    background: transparent;
+    min-width: 80px;
+    outline: none;
+    vertical-align: middle; /* Ensure input aligns vertically */
+    line-height: normal; /* Ensure line height doesn't add extra space */
+}
+
+.filterflex-text-input-wrapper .filterflex-remove-item {
+    /* Ensure remove button aligns nicely within the wrapper */
+    display: inline-flex;
+    align-items: center;
+    padding: 0 4px; /* Adjust padding if needed */
+    height: 100%; /* Try to match height */
+}
+/* === END NEW STYLES === */
+
+.filterflex-builder-item.non-removable {
+    /* Styles for non-removable items, e.g., no remove button or different look */
+    cursor: default;
+}
+
+.filterflex-builder-item.filterflex-text-item {
+    background-color: #fff; /* Make text items look more like input areas */
+    padding: 0; /* Remove padding if input has its own */
+}
+
+.filterflex-static-text-input {
+    border: none;
+    padding: 3px 5px;
+    margin: 0; /* No margin for the input itself, wrapper has margin */
+    background: transparent;
+    min-width: 80px; /* Give some initial width */
+    outline: none; /* Remove default focus outline */
+    /* Style moved to .filterflex-text-input-wrapper .filterflex-static-text-input */
+}
+.filterflex-text-input-wrapper .filterflex-static-text-input:focus { /* Target input within wrapper */
+    box-shadow: 0 0 0 1px #2271b1; /* WordPress blue focus outline */
+}
+
+.filterflex-remove-item {
+    margin-left: 5px;
+    color: #a00;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 3px;
+}
+.filterflex-remove-item:hover {
+    color: #f00;
+}
+.non-removable .filterflex-remove-item {
+    display: none; /* Hide remove button for non-removable items */
+}
+
+.filterflex-sortable-placeholder {
+    border: 2px dashed #2271b1;
+    background-color: #f0f6fc;
+    height: 30px; /* Match item height */
+    margin: 2px;
+    box-sizing: border-box;
+    display: inline-block; /* Keep it inline */
+    vertical-align: middle;
+}
+
+.filterflex-drag-over-builder { /* Style when dragging over the builder area */
+    background-color: #e6f0fa;
+    border-style: dashed;
+}
+
+.filterflex-custom-field-key-input {
+    width: 120px !important; /* Override general input width */
+    margin-left: 5px !important;
+    padding: 2px 4px !important;
+    font-size: 12px !important;
+    border: 1px solid #ccc !important;
+    display: inline-block !important; /* Ensure it's part of the tag item */
+    vertical-align: middle;
+}
