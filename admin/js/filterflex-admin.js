@@ -19,6 +19,10 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // --- Output Builder: Remove Filtered Element from Available Tags ---
+    $('.filterflex-available-tags .filterflex-tags-list').find('.draggable-tag[data-tag-value="{filtered_element}"]').remove();
+
+
     // --- Location Rules ---
     const rulesContainer = $('#filterflex-location-rules-container');
     let groupIndex = rulesContainer.find('.filterflex-rule-group').length -1; // Start index based on existing groups
@@ -69,9 +73,13 @@ jQuery(document).ready(function($) {
                     });
 
                     // Try to re-select the original saved value if it exists (only on initial load)
+                    // OR set default 'Posts' if param is 'post_type' and 'post' option exists
                     if (initialLoad && savedVal !== null && response.data.values.hasOwnProperty(savedVal)) {
                         $valueSelect.val(savedVal);
-                    } else {
+                    } else if ((!initialLoad || (initialLoad && savedVal === null)) && param === 'post_type' && response.data.values.hasOwnProperty('post')) {
+                         $valueSelect.val('post'); // Set default to 'Posts'
+                    }
+                    else {
                          $valueSelect.val(''); // Select default if no saved value or not found
                     }
                      $valueSelect.show();
@@ -128,16 +136,28 @@ jQuery(document).ready(function($) {
         const groupIdx = $group.index();
         const newRowIndex = $group.find('.filterflex-rule-row').length;
 
-        // Update name attributes and clear values for the new row
+        // Update name attributes and set default values for the new row
         $newRow.find('select, input').each(function() {
-            const name = $(this).attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIdx + '][' + newRowIndex + ']');
-            $(this).attr('name', name).val('');
+            const $this = $(this);
+            const name = $this.attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIdx + '][' + newRowIndex + ']');
+            $this.attr('name', name);
+
+            // Set default values
+            if ($this.hasClass('filterflex-rule-param')) {
+                $this.val('post_type'); // Default to Post Type
+            } else if ($this.hasClass('filterflex-rule-operator')) {
+                $this.val('=='); // Default to is equal to
+            } else {
+                $this.val(''); // Clear other inputs
+            }
         });
 
         // Clear and hide the value dropdown initially
         $newRow.find('.filterflex-rule-value').empty().hide();
         $newRow.appendTo($group);
-        // updateValueOptions($newRow); // Don't update yet, wait for param selection
+
+        // Trigger change on param to load value options and set default 'Posts'
+        $newRow.find('.filterflex-rule-param').trigger('change');
     });
 
      // Remove Rule
@@ -164,17 +184,36 @@ jQuery(document).ready(function($) {
         const $newGroup = $('<div class="filterflex-rule-group"></div>');
         const $newRow = $firstGroup.find('.filterflex-rule-row:first').clone();
 
-        // Update name attributes and clear values for the new row in the new group
+        // Update name attributes and set default values for the new row in the new group
         $newRow.find('select, input').each(function() {
-            const name = $(this).attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIndex + '][0]');
-            $(this).attr('name', name).val('');
+            const $this = $(this);
+            const name = $this.attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIndex + '][0]');
+            $this.attr('name', name);
+
+            // Set default values
+            if ($this.hasClass('filterflex-rule-param')) {
+                $this.val('post_type'); // Default to Post Type
+            } else if ($this.hasClass('filterflex-rule-operator')) {
+                $this.val('=='); // Default to is equal to
+            } else {
+                $this.val(''); // Clear other inputs
+            }
         });
 
          // Clear and hide the value dropdown initially
         $newRow.find('.filterflex-rule-value').empty().hide();
         $newRow.appendTo($newGroup);
+
+        // Add 'or' label after the last rule group if it's not the first group
+        const $existingGroups = rulesContainer.find('.filterflex-rule-group');
+        if ($existingGroups.length > 0) {
+            $('<div class="filterflex-or-label">or</div>').insertAfter($existingGroups.last());
+        }
+
         $newGroup.appendTo(rulesContainer);
-        // updateValueOptions($newRow); // Don't update yet, wait for param selection
+
+        // Trigger change on param to load value options and set default 'Posts'
+        $newRow.find('.filterflex-rule-param').trigger('change');
     });
 
     // --- Output Builder ---
@@ -350,6 +389,11 @@ jQuery(document).ready(function($) {
             } else if (tagType === 'separator') {
                 $newElement = createBuilderElement('separator', ' '); // Default to space
             } else { // 'tag'
+                // Prevent adding duplicate {filtered_element} tags
+                if (tagValue === '{filtered_element}' && $droppableContainer.find('.filterflex-tag-item[data-tag="{filtered_element}"]').length > 0) {
+                    // A {filtered_element} tag already exists, do not add another
+                    return;
+                }
                 $newElement = createBuilderElement('tag', tagValue, tagLabel);
             }
 

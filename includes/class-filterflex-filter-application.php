@@ -652,22 +652,106 @@ class FilterFlex_Filter_Application {
      * @param array  $transformations The transformations to apply.
      * @return string The transformed content.
      */
-    private function apply_transformations( $content, $transformations ) {
+    public function apply_transformations( $content, $transformations, $hook = '' ) { // Changed visibility to public
         foreach ( $transformations as $transformation ) {
             // Skip invalid transformations
             if ( ! is_array( $transformation ) || empty( $transformation['type'] ) ) {
                 continue;
             }
 
-            // Check if the transformation is registered
             $type = $transformation['type'];
-            if ( isset( $this->available_transformations[ $type ] ) && is_callable( $this->available_transformations[ $type ]['callback'] ) ) {
+
+            // Special handling for uppercase/lowercase on HTML content
+            if ( ( $type === 'uppercase' || $type === 'lowercase' ) && $hook === 'the_content' ) {
+                $content = $this->transform_case_html( $content, $type );
+            }
+            // Check if the transformation is registered and apply if not handled above
+            elseif ( isset( $this->available_transformations[ $type ] ) && is_callable( $this->available_transformations[ $type ]['callback'] ) ) {
                 $content = call_user_func( $this->available_transformations[ $type ]['callback'], $content, $transformation );
             }
         }
 
         return $content;
     }
+
+    /**
+     * Apply case transformation to text nodes within HTML content.
+     *
+     * @param string $html_content The HTML content to transform.
+     * @param string $case_type    'uppercase' or 'lowercase'.
+     * @return string The transformed HTML content.
+     */
+    private function transform_case_html( $html_content, $case_type ) {
+        if ( empty( trim( $html_content ) ) ) {
+            return $html_content;
+        }
+
+        $doc = new DOMDocument();
+        $doc->encoding = 'UTF-8';
+
+        $previous_libxml_error_use = libxml_use_internal_errors(true);
+
+        $marker_id = 'filterflex-content-wrapper-' . uniqid();
+        $html_fragment = mb_convert_encoding($html_content, 'HTML-ENTITIES', 'UTF-8');
+
+        if ( ! $doc->loadHTML('<div id="' . $marker_id . '">' . $html_fragment . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD) ) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        $xpath = new DOMXPath( $doc );
+        $textNodes = $xpath->query( '//div[@id="' . $marker_id . '"]//text()' );
+
+        if ($textNodes === false) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        foreach ( $textNodes as $textNode ) {
+            // Skip text nodes within script or style tags
+            if ( $textNode->parentNode && ($textNode->parentNode->nodeName === 'script' || $textNode->parentNode->nodeName === 'style') ) {
+                continue;
+            }
+
+            $originalText = $textNode->nodeValue;
+            $modifiedText = '';
+
+            if ( $case_type === 'uppercase' ) {
+                $modifiedText = strtoupper( $originalText );
+            } elseif ( $case_type === 'lowercase' ) {
+                $modifiedText = strtolower( $originalText );
+            } else {
+                $modifiedText = $originalText; // Should not happen with current logic, but as a fallback
+            }
+
+            if ($originalText !== $modifiedText) {
+                $textNode->nodeValue = $modifiedText;
+            }
+        }
+
+        $wrapper_node = $doc->getElementById($marker_id);
+        $processed_html = '';
+
+        if ($wrapper_node && $wrapper_node->hasChildNodes()) {
+            foreach ($wrapper_node->childNodes as $child_node) {
+                $processed_html .= $doc->saveHTML($child_node);
+            }
+        } elseif ($wrapper_node) {
+            $processed_html = '';
+        } else {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous_libxml_error_use);
+
+        return $processed_html;
+    }
+
 
     /**
      * Transform content with search and replace.

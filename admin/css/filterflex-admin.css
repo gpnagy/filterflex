@@ -34,6 +34,13 @@
     background-color: #f9f9f9;
 }
 
+.filterflex-or-label {
+    display: block; /* Revert to block display */
+    text-align: center; /* Add text-align back for block display */
+    margin: 10px 0;
+    font-weight: bold;
+}
+
 .filterflex-rule-row {
     display: flex;
     align-items: center;
@@ -198,24 +205,33 @@
     vertical-align: middle; /* Align items nicely in a line */
 }
 
+.filterflex-builder-item.non-removable { /* Visually differentiate non-removable items like Filtered Element */
+    background-color: #ffecb3; /* Light yellow background */
+    border-color: #ffb300; /* Orange border */
+    font-weight: bold;
+}
+
 .filterflex-builder-item.filterflex-tag-item { /* Specific styling for tags */
     background-color: #d0e4fe;
     border-color: #a6c9f7;
 }
 
+.wp-core-ui .button-secondary {
+    vertical-align: middle;
+}
+
 /* === NEW STYLES for Text Input Wrapper === */
 .filterflex-builder-item.filterflex-text-input-wrapper {
     /* Inherits display: inline-flex, align-items: center, vertical-align: middle */
-    background-color: #fff; /* Give it a distinct background */
-    border: 1px solid #b0b0b0; /* Match input border */
-    padding: 0; /* Remove outer padding, input will have padding */
+    /* Removed specific background-color, border, and padding to inherit from .filterflex-builder-item */
 }
 
 .filterflex-text-input-wrapper .filterflex-static-text-input {
-    border: none; /* Remove input's own border */
-    padding: 3px 5px; /* Internal padding for text */
+    border-color: #8c8f94;
+    border-radius: 3px;
+    padding: 3px 6px; /* Adjusted padding to match .filterflex-builder-item */
     margin: 0;
-    background: transparent;
+    background: #fff;
     min-width: 80px;
     outline: none;
     vertical-align: middle; /* Ensure input aligns vertically */
@@ -245,7 +261,7 @@
     border: none;
     padding: 3px 5px;
     margin: 0; /* No margin for the input itself, wrapper has margin */
-    background: transparent;
+    background: #fff;
     min-width: 80px; /* Give some initial width */
     outline: none; /* Remove default focus outline */
     /* Style moved to .filterflex-text-input-wrapper .filterflex-static-text-input */

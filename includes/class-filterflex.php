@@ -288,7 +288,7 @@ class FilterFlex {
                      <tbody>
                          <tr>
                              <th scope="row">
-                                 <label for="filterflex-filterable-element"><?php esc_html_e( 'Filterable Element', 'filterflex' ); ?></label>
+                                 <label for="filterflex-filterable-element"><?php esc_html_e( 'Element to Filter:', 'filterflex' ); ?></label>
                              </th>
                              <td>
                                  <select id="filterflex-filterable-element" name="filterflex_filterable_element">
@@ -305,7 +305,7 @@ class FilterFlex {
                          </tr>
                          <tr>
                              <th scope="row">
-                                 <label for="filterflex-priority"><?php esc_html_e( 'Priority', 'filterflex' ); ?></label>
+                                 <label for="filterflex-priority"><?php esc_html_e( 'Priority:', 'filterflex' ); ?></label>
                              </th>
                              <td>
                                  <input type="number" id="filterflex-priority" name="filterflex_priority" value="<?php echo esc_attr( $priority ); ?>" min="1" step="1" class="small-text">
@@ -314,7 +314,7 @@ class FilterFlex {
                          </tr>
                          <tr>
                              <th scope="row">
-                                 <label for="filterflex-apply-area"><?php esc_html_e( 'Apply Area', 'filterflex' ); ?></label>
+                                 <label for="filterflex-apply-area"><?php esc_html_e( 'Apply Filter To:', 'filterflex' ); ?></label>
                              </th>
                              <td>
                                  <select id="filterflex-apply-area" name="filterflex_apply_area">
@@ -391,7 +391,7 @@ class FilterFlex {
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <button type="button" class="button button-secondary filterflex-add-rule-group"><?php esc_html_e( '+ Add rule group', 'filterflex' ); ?></button> (<?php esc_html_e( 'or', 'filterflex' ); ?>)
+                <button type="button" class="button button-secondary filterflex-add-rule-group"><?php esc_html_e( '+ Add rule group', 'filterflex' ); ?></button> <span class="filterflex-or-rule-group">(<?php esc_html_e( 'or', 'filterflex' ); ?>)</span>
             </div>
 
             <!-- Filter Output Builder Section -->
@@ -460,6 +460,8 @@ class FilterFlex {
                                     <select name="filterflex_transformations[<?php echo $index; ?>][type]" class="filterflex-transformation-type">
                                         <option value=""><?php esc_html_e('-- Select Transformation --', 'filterflex'); ?></option>
                                         <option value="search_replace" <?php selected($type, 'search_replace'); ?>><?php esc_html_e('Search & Replace', 'filterflex'); ?></option>
+                                        <option value="uppercase" <?php selected($type, 'uppercase'); ?>><?php esc_html_e('Uppercase', 'filterflex'); ?></option>
+                                        <option value="lowercase" <?php selected($type, 'lowercase'); ?>><?php esc_html_e('Lowercase', 'filterflex'); ?></option>
                                         <?php // TODO: Add other transformation options ?>
                                     </select>
                                     <input type="text" name="filterflex_transformations[<?php echo $index; ?>][search]" placeholder="<?php esc_attr_e('Search for...', 'filterflex'); ?>" value="<?php echo esc_attr($search); ?>" class="filterflex-transformation-search" <?php echo $search_replace_style; ?>>
@@ -885,11 +887,16 @@ class FilterFlex {
         }
 
         // Apply Transformations
-        foreach ( $transformations as $transform ) {
-             if ( $transform['type'] === 'search_replace' && isset($transform['search'], $transform['replace']) && !empty($transform['search']) ) {
-                 $preview_string = str_replace( $transform['search'], $transform['replace'], $preview_string );
-             }
-             // TODO: Add other transformation logic
+        // Need the hook to correctly apply transformations, especially for HTML content
+        $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+        $hook = '';
+        if ( $post_id ) {
+            $hook = get_post_meta( $post_id, '_filterflex_filterable_element', true );
+        }
+
+        if ( is_array( $transformations ) && ! empty( $transformations ) ) {
+            // Pass the hook to apply_transformations
+            $preview_string = $this->filter_application->apply_transformations( $preview_string, $transformations, $hook );
         }
 
         wp_send_json_success( [ 'preview' => $preview_string ] );
