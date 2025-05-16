@@ -123,12 +123,6 @@
     gap: 5px; /* Spacing between items */
 }
 
-.filterflex-builder-input .filterflex-tag-item {
-    background-color: #cce5ff; /* Different color for tags in builder */
-    border-color: #99caff;
-    cursor: default; /* No grab cursor here */
-}
-
 .filterflex-builder-input .filterflex-static-text-input {
     border: 1px solid #ccc;
     padding: 4px 6px;

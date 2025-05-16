@@ -247,8 +247,14 @@ jQuery(document).ready(function($) {
         } else if (type === 'separator') {
             $itemWrapper.addClass('filterflex-separator-wrapper');
             const $select = $('<select>').addClass('filterflex-separator-select');
+            // Function to decode HTML entities
+            function decodeHtmlEntity(str) {
+                const textarea = document.createElement('textarea');
+                textarea.innerHTML = str;
+                return textarea.textContent;
+            }
             const options = {
-                "__{{SPACE}}__": " ", // Use a placeholder for space value, display text is still a space
+                "__{{SPACE}}__": decodeHtmlEntity("&#9251;"), // Display Open Box character using HTML entity
                 "|": "|",
                 "[": "[",
                 "]": "]",
@@ -387,7 +393,7 @@ jQuery(document).ready(function($) {
             if (tagType === 'text') {
                 $newElement = createBuilderElement('text', '');
             } else if (tagType === 'separator') {
-                $newElement = createBuilderElement('separator', ' '); // Default to space
+                $newElement = createBuilderElement('separator', "__{{SPACE}}__"); // Pass the correct value for the space option
             } else { // 'tag'
                 // Prevent adding duplicate {filtered_element} tags
                 if (tagValue === '{filtered_element}' && $droppableContainer.find('.filterflex-tag-item[data-tag="{filtered_element}"]').length > 0) {
@@ -528,11 +534,17 @@ jQuery(document).ready(function($) {
     // --- Live Preview ---
     const $previewOutput = $('#filterflex-preview-output');
 
+    const $filterableElementSelect = $('#filterflex-filterable-element'); // Get the select element
+
     function updatePreview() {
         // 1. Get the current builder pattern from the hidden input
         const pattern = $patternHiddenInput.val();
 
-        // 2. Get the current transformation settings
+        // 2. Get the selected filterable element
+        const filterableElement = $filterableElementSelect.val();
+        console.log('Selected filterable element:', filterableElement); // Log the selected element
+
+        // 3. Get the current transformation settings
         const transformations = [];
         $transContainer.find('.filterflex-transformation-row').each(function() {
             const $row = $(this);
@@ -560,6 +572,7 @@ jQuery(document).ready(function($) {
                  security_token: filterFlexData.preview_nonce, // Use a specific nonce for this action
                  pattern: pattern,
                  transformations: transformations,
+                 filterable_element: filterableElement, // Pass the selected element
                  // Optionally pass sample post ID or context
              },
              beforeSend: function() {
@@ -585,5 +598,10 @@ jQuery(document).ready(function($) {
 
     // Initial preview update on load
     updatePreview();
+
+    // Update preview when the filterable element changes
+    $filterableElementSelect.on('change', function() {
+        updatePreview();
+    });
 
 });

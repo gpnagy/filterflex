@@ -346,6 +346,11 @@ class FilterFlex {
                     foreach ( $location_rules as $group_index => $rule_group ) :
                         // Ensure rule_group is an array
                         if ( ! is_array( $rule_group ) ) { continue; }
+                    
+                    // Add 'or' label before the group if it's not the first group
+                    if ( $group_index > 0 ) {
+                        echo '<div class="filterflex-or-label">or</div>';
+                    }
                     ?>
                         <div class="filterflex-rule-group">
                             <?php foreach ( $rule_group as $rule_index => $rule ) :
@@ -840,6 +845,9 @@ class FilterFlex {
         $transformations_raw = isset( $_POST['transformations'] ) && is_array( $_POST['transformations'] ) ? $_POST['transformations'] : [];
 
         $pattern_data = json_decode( $pattern_json, true );
+        // Use sanitize_text_field for sanitizing the select field value
+        $filterable_element = isset( $_POST['filterable_element'] ) ? sanitize_text_field( $_POST['filterable_element'] ) : '';
+
         $transformations = [];
 
         // Basic sanitization for transformations
@@ -860,18 +868,49 @@ class FilterFlex {
 
         // Generate Preview String
         $preview_string = '';
+
+        // Determine sample data for {filtered_element} based on selected filterable element
+        $filtered_element_sample = 'Sample Content'; // Default sample
+        switch ($filterable_element) {
+            case 'the_title': // Assuming the value is the hook name
+                $filtered_element_sample = 'Sample Post Title';
+                break;
+            case 'get_the_excerpt': // Assuming the value is the hook name
+                $filtered_element_sample = 'Sample post excerpt goes here...';
+                break;
+            case 'the_content': // Assuming the value is the hook name
+                $filtered_element_sample = 'Sample post content with some <strong>HTML</strong> and paragraphs.';
+                break;
+            case 'term_name': // Assuming this key is correct
+                $filtered_element_sample = 'Sample Term Name';
+                break;
+            case 'user_display_name': // Assuming this key is correct
+                $filtered_element_sample = 'Sample User Name';
+                break;
+            // Add more cases for other filterable elements as needed, using their actual values
+        }
+
         $sample_data = [
-            '{filtered_element}' => 'Sample Post Title', '{categories}' => 'Category A, Category B',
-            '{tags}' => 'Tag1, Tag2', '{custom_field}' => 'Some Custom Value',
-            '{date}' => date( get_option( 'date_format' ) ), '{author}' => 'Admin User',
+            '{filtered_element}' => $filtered_element_sample,
+            '{categories}'       => 'Category A, Category B',
+            '{tags}'             => 'Tag1, Tag2',
+            '{custom_field}'     => 'Some Custom Value',
+            '{date}'             => date( get_option( 'date_format' ) ),
+            '{author}'           => 'Admin User',
+            // Add sample data for other tags if necessary
         ];
 
         foreach ( $pattern_data as $item ) {
             if ( ! is_array( $item ) || ! isset( $item['type'], $item['value'] ) ) continue;
 
             if ( $item['type'] === 'tag' ) {
-                // For tags, use sample data if available, otherwise the tag value itself.
-                $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                // If the tag is {filtered_element}, use the dynamic sample based on the selected element.
+                if ($item['value'] === '{filtered_element}') {
+                    $preview_string .= $filtered_element_sample;
+                } else {
+                    // For other tags, use sample data if available, otherwise the tag value itself.
+                    $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                }
             } elseif ( $item['type'] === 'text' ) {
                 // For static text, escape it and add to preview.
                 $preview_string .= esc_html( $item['value'] );
