@@ -87,6 +87,7 @@ class FilterFlex {
         // Customize post status UI
         add_action( 'post_submitbox_misc_actions', [ $this, 'custom_status_toggle' ] );
         add_filter( 'display_post_states', [ $this, 'modify_post_states' ], 10, 2 );
+        add_action( 'manage_posts_extra_tablenav', [ $this, 'display_no_filters_message' ], 10, 1 );
     }
 
     /**
@@ -1145,6 +1146,40 @@ class FilterFlex {
             return array();
         }
         return $post_states;
+    }
+
+    /**
+     * Display a custom message when no filters are found.
+     *
+     * @param string $which The location of the extra table navigation ('top' or 'bottom').
+     */
+    public function display_no_filters_message( $which ) {
+        if ( 'top' !== $which ) {
+            return;
+        }
+
+        $current_screen = get_current_screen();
+        if ( ! $current_screen || 'edit-filterflex_filter' !== $current_screen->id ) {
+            return;
+        }
+
+        $counts = wp_count_posts( 'filterflex_filter' );
+        $total_posts = $counts->publish + $counts->draft;
+
+        if ( $total_posts === 0 ) {
+            $add_new_url = admin_url( 'post-new.php?post_type=filterflex_filter' );
+            ?>
+            <div class='filterflex-no-filters-message' style='margin: 10px 0; text-align: center; padding: 20px; background-color: #fff; border: 1px solid #ccd0d4;'>
+                <h2><?php esc_html_e( 'Add Your First Filter', 'filterflex' ); ?></h2>
+                <p><?php esc_html_e( "It looks like you haven't created any filters yet. Get started by adding your first one!", 'filterflex' ); ?></p>
+                <a href='<?php echo esc_url( $add_new_url ); ?>' class='button button-primary button-hero'>
+                    <?php esc_html_e( '+ Add Filter', 'filterflex' ); ?>
+                </a>
+            </div>
+            <?php
+            // Prevent default "No items found" message or duplicate message
+            exit();
+        }
     }
 
 } // End of FilterFlex class
