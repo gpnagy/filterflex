@@ -71,12 +71,22 @@ class FilterFlex {
         add_action( 'add_meta_boxes_filterflex_filter', [ $this, 'add_settings_metabox' ] );
         add_action( 'save_post_filterflex_filter', [ $this, 'save_settings_metabox' ], 10, 2 );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
-        add_action( 'wp_ajax_filterflex_get_preview', [ $this, 'ajax_get_preview' ] ); // Add AJAX handler for preview
-        add_action( 'wp_ajax_filterflex_get_location_values', [ $this, 'ajax_get_location_values' ] ); // Add AJAX handler for location values
+        add_action( 'wp_ajax_filterflex_get_preview', [ $this, 'ajax_get_preview' ] );
+        add_action( 'wp_ajax_filterflex_get_location_values', [ $this, 'ajax_get_location_values' ] );
         
         // Add admin menu for settings page
         add_action( 'admin_menu', [ $this, 'add_admin_menu_settings_page' ] );
         add_action( 'admin_init', [ $this, 'register_settings' ] );
+
+        // Add custom columns to the FilterFlex post type listing
+        add_filter( 'manage_filterflex_filter_posts_columns', [ $this, 'add_custom_columns' ] );
+        add_action( 'manage_filterflex_filter_posts_custom_column', [ $this, 'render_custom_columns' ], 10, 2 );
+        add_filter( 'manage_edit-filterflex_filter_sortable_columns', [ $this, 'make_custom_columns_sortable' ] );
+        add_action( 'pre_get_posts', [ $this, 'custom_columns_orderby' ] );
+
+        // Customize post status UI
+        add_action( 'post_submitbox_misc_actions', [ $this, 'custom_status_toggle' ] );
+        add_filter( 'display_post_states', [ $this, 'modify_post_states' ], 10, 2 );
     }
 
     /**
@@ -417,15 +427,24 @@ class FilterFlex {
                                 if ( $tag_placeholder === '[static_text]' ) {
                                     $tag_type = 'text';
                                 } elseif ( $tag_placeholder === '[separator]' ) {
-                                    $tag_type = 'separator'; // Corrected from 'text'
+                                    $tag_type = 'separator';
                                 }
-                                // Note: $tag_data['type'] already sets the base type, this is for overrides.
+                                // Add icon HTML for separator and static text
+                                $icon_html = '';
+                                $extra_class = '';
+                                if ( $tag_placeholder === '[separator]' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-minus"></span>';
+                                    $extra_class = ' filterflex-tag-separator';
+                                } elseif ( $tag_placeholder === '[static_text]' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-edit"></span>';
+                                    $extra_class = ' filterflex-tag-static-text';
+                                }
                             ?>
-                                <span class="filterflex-tag-item draggable-tag"
+                                <span class="filterflex-tag-item draggable-tag<?php echo esc_attr( $extra_class ); ?>"
                                     data-tag-type="<?php echo esc_attr( $tag_type ); ?>"
                                     data-tag-value="<?php echo esc_attr( $tag_placeholder ); ?>"
                                     draggable="true">
-                                    <?php echo esc_html( $label ); ?>
+                                    <?php echo $icon_html; ?><?php echo esc_html( $label ); ?>
                                 </span>
                             <?php endforeach; ?>
                         </div>
@@ -469,10 +488,12 @@ class FilterFlex {
                                         <option value="lowercase" <?php selected($type, 'lowercase'); ?>><?php esc_html_e('Lowercase', 'filterflex'); ?></option>
                                         <?php // TODO: Add other transformation options ?>
                                     </select>
-                                    <input type="text" name="filterflex_transformations[<?php echo $index; ?>][search]" placeholder="<?php esc_attr_e('Search for...', 'filterflex'); ?>" value="<?php echo esc_attr($search); ?>" class="filterflex-transformation-search" <?php echo $search_replace_style; ?>>
-                                    <input type="text" name="filterflex_transformations[<?php echo $index; ?>][replace]" placeholder="<?php esc_attr_e('Replace with...', 'filterflex'); ?>" value="<?php echo esc_attr($replace); ?>" class="filterflex-transformation-replace" <?php echo $search_replace_style; ?>>
-                                    <input type="number" name="filterflex_transformations[<?php echo $index; ?>][limit]" placeholder="<?php esc_attr_e('Count', 'filterflex'); ?>" value="<?php echo esc_attr($limit); ?>" class="filterflex-transformation-limit small-text" <?php echo $limit_style; ?>>
-                                    <button type="button" class="button-link button-link-delete filterflex-remove-transformation"><?php esc_html_e('Remove', 'filterflex'); ?></button>
+                                    <div class="filterflex-transformation-fields-row" style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                                        <input type="text" name="filterflex_transformations[<?php echo $index; ?>][search]" placeholder="<?php esc_attr_e('Search for...', 'filterflex'); ?>" value="<?php echo esc_attr($search); ?>" class="filterflex-transformation-search" <?php echo $search_replace_style; ?>>
+                                        <input type="text" name="filterflex_transformations[<?php echo $index; ?>][replace]" placeholder="<?php esc_attr_e('Replace with...', 'filterflex'); ?>" value="<?php echo esc_attr($replace); ?>" class="filterflex-transformation-replace" <?php echo $search_replace_style; ?>>
+                                        <input type="number" name="filterflex_transformations[<?php echo $index; ?>][limit]" placeholder="<?php esc_attr_e('Count', 'filterflex'); ?>" value="<?php echo esc_attr($limit); ?>" class="filterflex-transformation-limit small-text" <?php echo $limit_style; ?>>
+                                        <button type="button" class="button-link button-link-delete filterflex-remove-transformation"><?php esc_html_e('Remove', 'filterflex'); ?></button>
+                                    </div>
                                   </div>
                                 <?php endforeach; ?>
                               </div>
@@ -544,6 +565,19 @@ class FilterFlex {
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
         if ( 'filterflex_filter' !== $post->post_type ) return;
 
+        // Ensure post status is preserved
+        if (isset($_POST['post_status'])) {
+            $post_status = sanitize_key($_POST['post_status']);
+            if (in_array($post_status, ['publish', 'draft'], true)) {
+                remove_action('save_post_filterflex_filter', [$this, 'save_settings_metabox']);
+                wp_update_post([
+                    'ID' => $post_id,
+                    'post_status' => $post_status
+                ]);
+                add_action('save_post_filterflex_filter', [$this, 'save_settings_metabox'], 10, 2);
+            }
+        }
+
         // --- Sanitize and Save Location Rules ---
         $sanitized_rules = [];
         if ( isset( $_POST['filterflex_rules'] ) && is_array( $_POST['filterflex_rules'] ) ) {
@@ -596,47 +630,40 @@ class FilterFlex {
                 $sanitized_pattern_data = [];
                 foreach ( $decoded_pattern as $item_data ) {
                     // Ensure item_data is an array and 'type' key exists.
-                    // 'value' key must also exist, even if it's an empty string for text items.
                     if ( is_array( $item_data ) && isset( $item_data['type'] ) && array_key_exists( 'value', $item_data ) ) {
                         $type = sanitize_key( $item_data['type'] );
-                        $value = $item_data['value']; // Get value before sanitizing based on type
-                        $sanitized_item_value = ''; // Initialize
+                        $value = $item_data['value'];
+                        $sanitized_item = [
+                            'type' => $type,
+                            'value' => sanitize_text_field( $value )
+                        ];
 
-                        if ( $type === 'tag' ) {
-                            $sanitized_item_value = sanitize_text_field( $value );
-                        } elseif ( $type === 'text' ) {
-                            // For text, allow empty strings, but sanitize others.
-                            $sanitized_item_value = sanitize_text_field( $value );
-                        } elseif ( $type === 'separator' ) {
-                            // For separators, ensure the value is one of the allowed ones.
-                            // Check for the space placeholder first.
+                        // Handle custom field meta data
+                        if ($type === 'tag' && $value === '{custom_field}' && isset($item_data['meta']) && is_array($item_data['meta'])) {
+                            $sanitized_item['meta'] = [
+                                'key' => sanitize_text_field($item_data['meta']['key'])
+                            ];
+                        }
+
+                        // Handle separator special case
+                        if ($type === 'separator') {
                             if ($value === "__{{SPACE}}__") {
-                                $sanitized_item_value = "__{{SPACE}}__";
+                                $sanitized_item['value'] = "__{{SPACE}}__";
                             } else {
-                                // Check against other allowed literal separator characters
-                                $other_allowed_separators = ["|", "[", "]", "(", ")", "-", "/", ":"];
-                                if (in_array($value, $other_allowed_separators, true)) {
-                                    $sanitized_item_value = $value;
+                                $allowed_separators = ["|", "[", "]", "(", ")", "-", "/", ":"];
+                                if (in_array($value, $allowed_separators, true)) {
+                                    $sanitized_item['value'] = $value;
                                 } else {
-                                    // If not an allowed separator (neither placeholder nor literal), make it empty.
-                                    $sanitized_item_value = ''; 
+                                    $sanitized_item['value'] = '';
                                 }
                             }
-                        } else {
-                            // Unknown type, skip this item.
-                            continue;
                         }
-                        
-                        $sanitized_pattern_data[] = [
-                            'type'  => $type,
-                            'value' => $sanitized_item_value,
-                        ];
+
+                        $sanitized_pattern_data[] = $sanitized_item;
                     }
                 }
-                // Re-encode the sanitized data. If $sanitized_pattern_data is empty, wp_json_encode([]) gives '[]'.
                 $output_pattern_json_to_save = wp_json_encode( $sanitized_pattern_data );
             }
-            // If json_decode failed or was not an array, $output_pattern_json_to_save remains '[]' (the default set above).
         }
         update_post_meta( $post_id, '_filterflex_output_config', [ 'pattern' => $output_pattern_json_to_save ] );
 
@@ -716,15 +743,19 @@ class FilterFlex {
      * Enqueue admin scripts and styles.
      */
     public function enqueue_admin_assets( $hook_suffix ) {
-        if ( 'post.php' === $hook_suffix || 'post-new.php' === $hook_suffix ) {
-            $screen = get_current_screen();
-            if ( $screen && 'filterflex_filter' === $screen->post_type ) {
-                wp_enqueue_style( 'filterflex-admin-css', FILTERFLEX_PLUGIN_URL . 'admin/css/filterflex-admin.css', [], FILTERFLEX_VERSION );
-                wp_enqueue_script( 'filterflex-admin-js', FILTERFLEX_PLUGIN_URL . 'admin/js/filterflex-admin.js', [ 'jquery', 'jquery-ui-sortable', 'jquery-ui-draggable', 'jquery-ui-droppable' ], FILTERFLEX_VERSION, true ); // Added jquery-ui-droppable
+        $screen = get_current_screen();
+        
+        // Check if we're on any FilterFlex screen
+        if ( $screen && 'filterflex_filter' === $screen->post_type ) {
+            // Always load the admin CSS on FilterFlex screens
+            wp_enqueue_style( 'filterflex-admin-css', FILTERFLEX_PLUGIN_URL . 'admin/css/filterflex-admin.css', [], FILTERFLEX_VERSION );
+            
+            // Only load JS and other assets on the edit screen
+            if ( 'post.php' === $hook_suffix || 'post-new.php' === $hook_suffix ) {
+                wp_enqueue_script( 'filterflex-admin-js', FILTERFLEX_PLUGIN_URL . 'admin/js/filterflex-admin.js', [ 'jquery', 'jquery-ui-sortable', 'jquery-ui-draggable', 'jquery-ui-droppable' ], FILTERFLEX_VERSION, true );
 
                 // Get saved data, ensuring pattern is passed correctly
                 $output_config = get_post_meta( get_the_ID(), '_filterflex_output_config', true );
-                $default_pattern_array = [ [ 'type' => 'tag', 'value' => '{filtered_element}' ] ];
                 $default_pattern_array = [ [ 'type' => 'tag', 'value' => '{filtered_element}' ] ];
                 $output_pattern_json = isset($output_config['pattern']) && !empty($output_config['pattern']) ? $output_config['pattern'] : json_encode($default_pattern_array);
                 // Ensure it's valid JSON, fallback if not
@@ -737,14 +768,14 @@ class FilterFlex {
                     'filterFlexData',
                     [
                         'ajax_url'        => admin_url( 'admin-ajax.php' ),
-                        'rest_url'        => rest_url(), // Still useful if other parts use REST
-                        'nonce'           => wp_create_nonce( 'wp_rest' ), // This is the REST API nonce
-                        'preview_nonce'   => wp_create_nonce( 'filterflex_preview_action' ), // <-- Specific nonce for preview
-                        'location_nonce'  => wp_create_nonce( 'filterflex_location_nonce' ), // <-- Nonce for location values (renamed for clarity)
+                        'rest_url'        => rest_url(),
+                        'nonce'           => wp_create_nonce( 'wp_rest' ),
+                        'preview_nonce'   => wp_create_nonce( 'filterflex_preview_action' ),
+                        'location_nonce'  => wp_create_nonce( 'filterflex_location_nonce' ),
                         'post_id'         => get_the_ID(),
                         'i18n'            => [ /* ... */ ],
                         'location_rules_config' => [ /* ... */ ],
-                        'available_tags'        => $this->get_all_available_tags_for_builder(), // Use the new helper method
+                        'available_tags'        => $this->filter_application->get_available_tags(),
                         'available_transformations' => $this->filter_application->get_available_transformations(),
                         'saved_location_rules'  => get_post_meta( get_the_ID(), '_filterflex_location_rules', true ) ?: [],
                         'saved_output_pattern'  => $output_pattern_json,
@@ -939,6 +970,181 @@ class FilterFlex {
         }
 
         wp_send_json_success( [ 'preview' => $preview_string ] );
+    }
+
+    /**
+     * Add custom columns to the FilterFlex post type listing.
+     *
+     * @param array $columns The default columns.
+     * @return array Modified columns.
+     */
+    public function add_custom_columns( $columns ) {
+        $new_columns = [];
+
+        // Reorder columns - put checkbox and title first
+        if (isset($columns['cb'])) {
+            $new_columns['cb'] = $columns['cb'];
+        }
+        if (isset($columns['title'])) {
+            $new_columns['title'] = $columns['title'];
+        }
+
+        // Add our custom columns
+        $new_columns['filtered_element'] = __('Filtered Element', 'filterflex');
+        $new_columns['priority'] = __('Priority', 'filterflex');
+        $new_columns['apply_area'] = __('Applied To', 'filterflex');
+        $new_columns['status'] = __('Status', 'filterflex');
+
+        // Add any remaining columns
+        foreach ($columns as $key => $value) {
+            if (!isset($new_columns[$key])) {
+                $new_columns[$key] = $value;
+            }
+        }
+
+        return $new_columns;
+    }
+
+    /**
+     * Render the content for custom columns.
+     *
+     * @param string $column The column name.
+     * @param int    $post_id The post ID.
+     */
+    public function render_custom_columns( $column, $post_id ) {
+        switch ( $column ) {
+            case 'filtered_element':
+                $element = get_post_meta( $post_id, '_filterflex_filterable_element', true );
+                if ( ! empty( $element ) && isset( $this->filter_application->get_filterable_elements()[$element] ) ) {
+                    echo esc_html( $this->filter_application->get_filterable_elements()[$element]['label'] );
+                } else {
+                    echo '<span class="no-element">' . esc_html__( 'Not set', 'filterflex' ) . '</span>';
+                }
+                break;
+
+            case 'priority':
+                $priority = get_post_meta( $post_id, '_filterflex_priority', true );
+                echo esc_html( $priority ? $priority : '10' );
+                break;
+
+            case 'apply_area':
+                $area = get_post_meta( $post_id, '_filterflex_apply_area', true );
+                switch ( $area ) {
+                    case 'frontend':
+                        echo '<span class="area-frontend">' . esc_html__( 'Frontend', 'filterflex' ) . '</span>';
+                        break;
+                    case 'admin':
+                        echo '<span class="area-admin">' . esc_html__( 'Admin', 'filterflex' ) . '</span>';
+                        break;
+                    case 'both':
+                        echo '<span class="area-both">' . esc_html__( 'Both', 'filterflex' ) . '</span>';
+                        break;
+                    default:
+                        echo '<span class="area-frontend">' . esc_html__( 'Frontend', 'filterflex' ) . '</span>';
+                }
+                break;
+
+            case 'status':
+                $post_status = get_post_status($post_id);
+                $status_class = $post_status === 'publish' ? 'status-active' : 'status-inactive';
+                $status_text = $post_status === 'publish' ? __('Active', 'filterflex') : __('Inactive', 'filterflex');
+                echo '<span class="' . esc_attr($status_class) . '">' . esc_html($status_text) . '</span>';
+                break;
+        }
+    }
+
+    /**
+     * Make custom columns sortable.
+     *
+     * @param array $columns The sortable columns.
+     * @return array Modified sortable columns.
+     */
+    public function make_custom_columns_sortable( $columns ) {
+        $columns['priority'] = 'priority';
+        $columns['filtered_element'] = 'filtered_element';
+        $columns['apply_area'] = 'apply_area';
+        return $columns;
+    }
+
+    /**
+     * Handle custom column sorting.
+     *
+     * @param WP_Query $query The WordPress query object.
+     */
+    public function custom_columns_orderby( $query ) {
+        if ( ! is_admin() || ! $query->is_main_query() || $query->get( 'post_type' ) !== 'filterflex_filter' ) {
+            return;
+        }
+
+        $orderby = $query->get( 'orderby' );
+
+        switch ( $orderby ) {
+            case 'priority':
+                $query->set( 'meta_key', '_filterflex_priority' );
+                $query->set( 'orderby', 'meta_value_num' );
+                break;
+
+            case 'filtered_element':
+                $query->set( 'meta_key', '_filterflex_filterable_element' );
+                $query->set( 'orderby', 'meta_value' );
+                break;
+
+            case 'apply_area':
+                $query->set( 'meta_key', '_filterflex_apply_area' );
+                $query->set( 'orderby', 'meta_value' );
+                break;
+        }
+    }
+
+    /**
+     * Customize the status toggle in the publish box.
+     *
+     * @param WP_Post $post The post object.
+     */
+    public function custom_status_toggle( $post ) {
+        if ( $post->post_type !== 'filterflex_filter' ) {
+            return;
+        }
+
+        // Get the current post status
+        $status = $post->post_status;
+        ?>
+        <div class="filterflex-status-toggle">
+            <label>
+                <span class="filterflex-status-label"><?php esc_html_e( 'Filter Status', 'filterflex' ); ?></span>
+                <span class="filterflex-switch-wrapper" style="display: flex; align-items: center;">
+                    <span class="filterflex-switch">
+                        <input type="hidden" name="post_status" value="draft">
+                        <input type="checkbox" 
+                               id="post-status-checkbox"
+                               class="post-status-toggle"
+                               <?php checked( $status, 'publish' ); ?>
+                               onchange="document.querySelector('input[name=\'post_status\']').value = this.checked ? 'publish' : 'draft';">
+                        <span class="filterflex-slider"></span>
+                    </span>
+                    <span class="filterflex-status-text"><?php echo $status === 'publish' ? esc_html__( 'Active', 'filterflex' ) : esc_html__( 'Inactive', 'filterflex' ); ?></span>
+                </span>
+            </label>
+            <p class="description">
+                <?php esc_html_e( 'Toggle to activate or deactivate this filter.', 'filterflex' ); ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
+     * Modify the post states display.
+     *
+     * @param array   $post_states An array of post states.
+     * @param WP_Post $post        The post object.
+     * @return array Modified post states.
+     */
+    public function modify_post_states( $post_states, $post ) {
+        if ( $post->post_type === 'filterflex_filter' ) {
+            // Clear existing states and return empty array for our post type
+            return array();
+        }
+        return $post_states;
     }
 
 } // End of FilterFlex class

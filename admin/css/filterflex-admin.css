@@ -82,15 +82,26 @@
     margin-bottom: 10px;
 }
 
-.filterflex-tag-item {
-    display: inline-block;
-    background-color: #e0e0e0;
+/* Make available tags look like builder tags */
+.filterflex-tags-list .filterflex-tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     padding: 3px 8px;
     border-radius: 3px;
-    font-size: 0.9em;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    user-select: none; /* Prevent text selection during drag */
+    border: 1px solid #a6c9f7;
+    background-color: #d0e4fe;
+    color: #1d2327;
+    font-weight: 500;
+    margin-bottom: 4px;
+    margin-right: 4px;
+    transition: background 0.2s, border 0.2s;
+}
+
+.filterflex-tags-list .filterflex-tag-item:hover {
+    background-color: #b3d4fc;
+    border-color: #2271b1;
+    cursor: grab;
 }
 
 .filterflex-available-tags .filterflex-tag-item.draggable-tag {
@@ -99,7 +110,6 @@
 .filterflex-available-tags .filterflex-tag-item.draggable-tag:active {
     cursor: grabbing;
 }
-
 
 .filterflex-available-tags .description {
     font-size: 11px;
@@ -164,6 +174,22 @@
     color: #dc3232;
 }
 
+/* Transformation fields row below select */
+.filterflex-transformation-fields-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+@media (max-width: 600px) {
+    .filterflex-transformation-fields-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+}
 
 /* Preview Area */
 .filterflex-preview-area {
@@ -301,4 +327,383 @@
     border: 1px solid #ccc !important;
     display: inline-block !important; /* Ensure it's part of the tag item */
     vertical-align: middle;
+}
+
+.filterflex-tag-item .custom-field-meta-input {
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    padding: 3px 6px;
+    margin: 0 4px;
+    background: #fff;
+    min-width: 80px;
+    width: 120px;
+    outline: none;
+    vertical-align: middle;
+    line-height: normal;
+}
+
+.filterflex-tag-item .custom-field-meta-input:focus {
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.filterflex-tag-item .tag-label {
+    color: inherit;
+    font-weight: normal;
+}
+
+/* Style for the remove button to stay aligned */
+.filterflex-tag-item .filterflex-remove-item {
+    margin-left: 4px;
+}
+
+/* Custom Columns Styling */
+.post-type-filterflex_filter .wp-list-table {
+    table-layout: auto;
+}
+
+.post-type-filterflex_filter .column-filtered_element,
+.post-type-filterflex_filter .column-priority,
+.post-type-filterflex_filter .column-apply_area,
+.post-type-filterflex_filter .column-status {
+    width: auto;
+    min-width: 100px;
+}
+
+.post-type-filterflex_filter .column-priority {
+    width: 80px;
+    text-align: center;
+}
+
+/* Status Indicators */
+.post-type-filterflex_filter .status-active,
+.post-type-filterflex_filter .status-inactive,
+.post-type-filterflex_filter .area-frontend,
+.post-type-filterflex_filter .area-admin,
+.post-type-filterflex_filter .area-both,
+.post-type-filterflex_filter .no-element {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.post-type-filterflex_filter .status-active {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+.post-type-filterflex_filter .status-inactive {
+    background-color: #f2dede;
+    color: #a94442;
+}
+
+.post-type-filterflex_filter .area-frontend {
+    background-color: #d9edf7;
+    color: #31708f;
+}
+
+.post-type-filterflex_filter .area-admin {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+.post-type-filterflex_filter .area-both {
+    background-color: #e8e8e8;
+    color: #555;
+}
+
+.post-type-filterflex_filter .no-element {
+    background-color: #f5f5f5;
+    color: #999;
+    font-style: italic;
+}
+
+/* Priority Column */
+.post-type-filterflex_filter .column-priority {
+    font-weight: 600;
+}
+
+/* Hover states */
+.post-type-filterflex_filter .status-active:hover,
+.post-type-filterflex_filter .status-inactive:hover,
+.post-type-filterflex_filter .area-frontend:hover,
+.post-type-filterflex_filter .area-admin:hover,
+.post-type-filterflex_filter .area-both:hover {
+    opacity: 0.9;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .post-type-filterflex_filter .column-filtered_element,
+    .post-type-filterflex_filter .column-priority,
+    .post-type-filterflex_filter .column-apply_area,
+    .post-type-filterflex_filter .column-status {
+        display: none;
+    }
+}
+
+/* Status Toggle Switch */
+#visibility, #minor-publishing-actions {
+    display: none;
+}
+
+.filterflex-status-toggle {
+    padding: 10px;
+    clear: both;
+    border-top: 1px solid #dcdcde;
+}
+
+.filterflex-status-toggle label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+}
+
+.filterflex-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 24px;
+    margin-right: 8px; /* Add margin to separate switch from status text */
+}
+
+.filterflex-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.filterflex-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.filterflex-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .filterflex-slider {
+    background-color: #2271b1;
+}
+
+input:focus + .filterflex-slider {
+    box-shadow: 0 0 1px #2271b1;
+}
+
+input:checked + .filterflex-slider:before {
+    transform: translateX(16px);
+}
+
+.filterflex-status-toggle .description {
+    margin: 8px 0 0;
+    color: #646970;
+}
+
+.filterflex-status-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2271b1; /* WordPress blue color */
+    transition: .4s;
+}
+
+input:not(:checked) ~ .filterflex-status-text {
+    color: #646970; /* WordPress gray color for inactive state */
+}
+
+/* Status Column Styling */
+.status-active,
+.status-inactive {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.status-active {
+    background-color: #edfaef;
+    color: #0a5d1d;
+    border: 1px solid #72c484;
+}
+
+.status-active::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #00a32a;
+}
+
+.status-inactive {
+    background-color: #f6f7f7;
+    color: #646970;
+    border: 1px solid #dcdcde;
+}
+
+.status-inactive::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #646970;
+}
+
+/* Hover effects */
+.status-active:hover {
+    background-color: #dcf5e1;
+    border-color: #00a32a;
+}
+
+.status-inactive:hover {
+    background-color: #f0f0f1;
+    border-color: #8c8f94;
+}
+
+/* Status Column Alignment */
+.column-status {
+    text-align: center;
+}
+
+/* Hide default post status UI */
+.post-type-filterflex_filter #post-status-select,
+.post-type-filterflex_filter #post-status-info,
+.post-type-filterflex_filter div.misc-pub-post-status {
+    display: none !important;
+}
+
+/* Status Column in List Table */
+.widefat td.column-status {
+    text-align: center;
+    vertical-align: top;
+    padding: 8px;
+    line-height: normal;
+}
+
+.widefat td.column-status span.status-active,
+.widefat td.column-status span.status-inactive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 500;
+    min-width: 90px;
+    margin: 0;
+    height: 24px;
+    position: relative;
+    top: -1px;
+}
+
+/* Status Column Header */
+.widefat th.column-status {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.widefat td.column-status span.status-active {
+    background-color: #edfaef;
+    color: #0a5d1d;
+    border: 1px solid #72c484;
+}
+
+.widefat td.column-status span.status-active::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #00a32a;
+    position: relative;
+    top: -0.5px;
+}
+
+.widefat td.column-status span.status-inactive {
+    background-color: #f6f7f7;
+    color: #646970;
+    border: 1px solid #dcdcde;
+}
+
+.widefat td.column-status span.status-inactive::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #646970;
+    position: relative;
+    top: -0.5px;
+}
+
+/* Applied To Column */
+.widefat td.column-apply_area span.area-frontend,
+.widefat td.column-apply_area span.area-admin,
+.widefat td.column-apply_area span.area-both {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    line-height: 1.5em;
+}
+
+.widefat td.column-apply_area span.area-frontend {
+    background-color: #e6f6fb;
+    color: #0a4b78;
+    border: 1px solid #72b5d4;
+}
+
+.widefat td.column-apply_area span.area-admin {
+    background-color: #fff8e5;
+    color: #8a6d3b;
+    border: 1px solid #f0c33c;
+}
+
+.widefat td.column-apply_area span.area-both {
+    background-color: #f0f0f1;
+    color: #1d2327;
+    border: 1px solid #c3c4c7;
+}
+
+/* Tag icons for available tags */
+.filterflex-tag-icon {
+    margin-right: 1px;
+    font-size: 16px;
+    vertical-align: middle !important;
+    position: relative;
+    top: 2px;
+}
+
+/* Optional: visually distinguish separator/static text tags */
+.filterflex-tag-separator {
+    background-color: #f3f3f3;
+    border-color: #bbb;
+}
+.filterflex-tag-static-text {
+    background-color: #eaf6fb;
+    border-color: #7ad0f5;
 }

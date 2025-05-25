@@ -77,6 +77,12 @@ class FilterFlex_Filter_Application {
                 'priority' => 10,
                 'args' => 1,
             ],
+            'get_the_archive_title' => [
+                'label' => __( 'Archive Page Title', 'filterflex' ),
+                'callback' => [ $this, 'filter_get_the_archive_title' ],
+                'priority' => 10,
+                'args' => 1, // Title
+            ],
         ];
 
         // Allow plugins/themes to add custom filterable elements
@@ -211,24 +217,28 @@ class FilterFlex_Filter_Application {
     }
 
     /**
+     * Filter the archive page title.
+     *
+     * @param string $title The archive title.
+     * @return string The filtered archive title.
+     */
+    public function filter_get_the_archive_title( $title ) {
+        // The hook 'get_the_archive_title' provides the title string.
+        // We don't have a specific post or term ID in this general archive context.
+        // We'll pass 0 for post_id in apply_filters_to_element as it's not directly available.
+        return $this->apply_filters_to_element( 'get_the_archive_title', $title, 0 );
+    }
+
+
+    /**
      * Apply filters to an element.
      *
      * @param string $hook The filter hook.
      * @param string $content The content to filter.
-     * @param int    $post_id The post ID (optional).
+     * @param int    $context_id The context ID (post ID, term ID, etc.).
      * @return string The filtered content.
      */
-    private function apply_filters_to_element( $hook, $content, $post_id = 0 ) {
-        // If no post ID is provided, try to get it from the current post
-        if ( ! $post_id ) {
-            $post_id = get_the_ID();
-        }
-
-        // If still no post ID, return the content unmodified
-        if ( ! $post_id ) {
-            return $content;
-        }
-
+    private function apply_filters_to_element( $hook, $content, $context_id = 0 ) {
         // Get all active filters for this hook
         $filters = $this->get_active_filters( $hook );
 
@@ -241,11 +251,11 @@ class FilterFlex_Filter_Application {
         usort( $filters, function( $a, $b ) {
             $a_priority = get_post_meta( $a->ID, '_filterflex_priority', true );
             $b_priority = get_post_meta( $b->ID, '_filterflex_priority', true );
-            
+
             // Default to 10 if not set
             $a_priority = $a_priority ? intval( $a_priority ) : 10;
             $b_priority = $b_priority ? intval( $b_priority ) : 10;
-            
+
             return $b_priority - $a_priority; // Higher priority first
         } );
 
@@ -253,6 +263,8 @@ class FilterFlex_Filter_Application {
         $filtered_content = $content;
         foreach ( $filters as $filter ) {
             // Check if the filter applies to the current context
+            // We might need to pass the context_id to filter_applies_to_context if location rules
+            // need to check against the specific term or user. For now, it only checks page context.
             if ( ! $this->filter_applies_to_context( $filter->ID ) ) {
                 continue;
             }
@@ -264,12 +276,13 @@ class FilterFlex_Filter_Application {
             }
 
             // Process the output pattern
-            $output = $this->process_output_pattern( $output_config['pattern'], $filtered_content, $post_id );
+            // Pass the context_id to process_output_pattern so tags like {post_id} or {term_id} work
+            $output = $this->process_output_pattern( $output_config['pattern'], $filtered_content, $context_id );
 
             // Apply transformations
             $transformations = get_post_meta( $filter->ID, '_filterflex_transformations', true );
             if ( is_array( $transformations ) && ! empty( $transformations ) ) {
-                $output = $this->apply_transformations( $output, $transformations );
+                $output = $this->apply_transformations( $output, $transformations, $hook ); // Pass hook for HTML transformations
             }
 
             // Replace the content with the processed output
@@ -517,6 +530,9 @@ class FilterFlex_Filter_Application {
     private function process_tag_item( $tag_item, $original_content, $post_id ) {
         $tag_placeholder = $tag_item['value']; // e.g., "{categories}", "{custom_field}"
 
+        // Debug logging
+        error_log('Processing tag item: ' . print_r($tag_item, true));
+
         // Handle the {filtered_element} tag directly as it uses the $original_content
         if ( $tag_placeholder === '{filtered_element}' ) {
             return $original_content;
@@ -524,9 +540,13 @@ class FilterFlex_Filter_Application {
 
         // Handle {custom_field} specifically because it needs the meta key
         if ( $tag_placeholder === '{custom_field}' ) {
+            error_log('Processing custom field tag with meta: ' . print_r($tag_item['meta'], true));
             if ( isset( $tag_item['meta']['key'] ) && ! empty( $tag_item['meta']['key'] ) ) {
                 $field_key = $tag_item['meta']['key'];
-                return esc_html( get_post_meta( $post_id, $field_key, true ) );
+                error_log('Getting custom field value for key: ' . $field_key);
+                $value = get_post_meta( $post_id, $field_key, true );
+                error_log('Custom field value: ' . $value);
+                return esc_html( $value );
             }
             return ''; // No key provided for custom field
         }

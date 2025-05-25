@@ -1,15 +1,19 @@
 <?php
 /**
  * Plugin Name:       FilterFlex
- * Plugin URI:        https://example.com/filterflex
- * Description:       A powerful plugin for applying filters to various WordPress elements.
+ * Plugin URI:        https://wordpress.org/plugins/filterflex
+ * Description:       A powerful plugin for applying filters to various WordPress elements with custom field support and dynamic tag replacement.
  * Version:           1.0.0
+ * Requires at least: 5.0
+ * Requires PHP:      7.4
  * Author:            Your Name
- * Author URI:        https://example.com
+ * Author URI:        https://yourwebsite.com
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       filterflex
  * Domain Path:       /languages
+ *
+ * @package          FilterFlex
  */
 
 // Exit if accessed directly.
