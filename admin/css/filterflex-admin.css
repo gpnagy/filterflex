@@ -707,3 +707,177 @@ input:not(:checked) ~ .filterflex-status-text {
     background-color: #eaf6fb;
     border-color: #7ad0f5;
 }
+
+/* Hide the postbox header for the FilterFlex settings metabox */
+.postbox#filterflex_settings_metabox .postbox-header {
+    display: none;
+}
+
+/* Adjustments for the metabox content since header is hidden */
+.postbox#filterflex_settings_metabox .inside {
+    padding-top: 0; /* Remove default padding if header is hidden */
+}
+.filterflex-metabox-content {
+    padding-top: 12px; /* Add some padding to the top of our content */
+}
+
+/* Section Differentiation and Title Enhancements */
+.filterflex-section {
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+    padding-top: 20px;
+    margin-bottom: 20px;
+}
+
+.filterflex-section:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.filterflex-section h3 {
+    font-size: 1.4em; /* Slightly larger than WP default h2 in metabox */
+    font-weight: 600;
+    padding-bottom: 15px;
+    margin-top: 0; /* Already handled by section padding-top */
+    display: flex;
+    align-items: center;
+}
+
+.filterflex-section h3 .dashicons {
+    margin-right: 8px;
+    font-size: 1em; /* Match title font size or be slightly smaller/larger as per visual preference */
+    line-height: inherit;
+}
+
+/* More specific styling for h4 within sections if needed, e.g., Filter Output sub-sections */
+.filterflex-section h4 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+
+/* Stylized Form Elements */
+
+/* General input and select styling */
+#filterflex_settings_metabox input[type="text"],
+#filterflex_settings_metabox input[type="number"],
+#filterflex_settings_metabox input[type="email"],
+#filterflex_settings_metabox input[type="search"],
+#filterflex_settings_metabox select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.07);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    min-height: 38px; /* Consistent height */
+    vertical-align: middle;
+}
+
+#filterflex_settings_metabox select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5H5z%22%20fill%3D%22%23555%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 30px; /* Make space for arrow */
+}
+
+#filterflex_settings_metabox input[type="text"]:focus,
+#filterflex_settings_metabox input[type="number"]:focus,
+#filterflex_settings_metabox input[type="email"]:focus,
+#filterflex_settings_metabox input[type="search"]:focus,
+#filterflex_settings_metabox select:focus {
+    border-color: #007cba;
+    box-shadow: 0 0 0 1px #007cba;
+    outline: none;
+}
+
+/* Custom Checkboxes */
+#filterflex_settings_metabox .filterflex-switch input[type="checkbox"].post-status-toggle { /* Example for existing toggle */
+    /* Keep existing styles for this specific toggle if they work, or adapt */
+}
+
+/* General custom checkbox styling (if new checkboxes are added or existing ones need override) */
+/* This is a basic example, might need adjustment based on HTML structure of checkboxes */
+#filterflex_settings_metabox .wp-core-ui input[type="checkbox"] {
+    /* Potentially hide default WP checkbox if fully customizing. Careful with accessibility. */
+}
+
+
+/* Buttons - Minor enhancements if needed, WP buttons are generally good */
+#filterflex_settings_metabox .button,
+#filterflex_settings_metabox .button-secondary,
+#filterflex_settings_metabox .button-primary {
+    padding: 6px 12px; /* Adjust padding if needed */
+    border-radius: 3px;
+    min-height: 38px;
+    vertical-align: middle;
+}
+#filterflex_settings_metabox .button .dashicons {
+    margin-right: 4px;
+    line-height: inherit; /* Helps vertical alignment */
+}
+
+/* Specific styling for rule buttons in Location Rules if needed */
+#filterflex_settings_metabox .filterflex-rule-row .button,
+#filterflex_settings_metabox .filterflex-rule-row .button-link {
+    margin-left: 5px;
+}
+
+#filterflex_settings_metabox .filterflex-add-rule-group {
+    margin-top: 10px;
+}
+
+/* Ensure styles are scoped - most selectors above are already scoped with #filterflex_settings_metabox */
+/* If any global styles were added, they would need scoping. */
+
+/* Styling for Available Tags and Builder Area in Filter Output */
+.filterflex-output-builder-container {
+    display: flex;
+    gap: 20px;
+}
+.filterflex-available-tags,
+.filterflex-builder-area {
+    flex: 1;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+}
+.filterflex-tags-list .draggable-tag {
+    display: inline-block;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    margin: 3px;
+    border-radius: 3px;
+    cursor: grab;
+}
+.filterflex-builder-input {
+    min-height: 100px;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    background-color: #fff;
+}
+.filterflex-builder-input .filterflex-tag-item { /* Items once dropped in builder */
+     display: inline-block;
+     background-color: #e0eaf2;
+     border: 1px solid #9cbadd;
+     padding: 5px 10px;
+     margin: 3px;
+     border-radius: 3px;
+}
+
+/* Transformations & Preview Area */
+.filterflex-transformations,
+.filterflex-preview-area {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+}

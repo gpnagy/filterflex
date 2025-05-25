@@ -294,7 +294,7 @@ class FilterFlex {
 
             <!-- General Settings Section -->
             <div class="filterflex-section general-settings-section">
-                 <h3><?php esc_html_e( 'General Settings', 'filterflex' ); ?></h3>
+                 <h3><span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'General Settings', 'filterflex' ); ?></h3>
                  <table class="form-table">
                      <tbody>
                          <tr>
@@ -342,7 +342,7 @@ class FilterFlex {
 
             <!-- Location Rules Section -->
             <div class="filterflex-section location-rules-section">
-                <h3><?php esc_html_e( 'Location Rules', 'filterflex' ); ?></h3>
+                <h3><span class="dashicons dashicons-location-alt"></span> <?php esc_html_e( 'Location Rules', 'filterflex' ); ?></h3>
                 <p><em><?php esc_html_e( 'Show this filter if', 'filterflex' ); ?></em></p>
                 <div id="filterflex-location-rules-container">
                     <?php
@@ -412,7 +412,7 @@ class FilterFlex {
 
             <!-- Filter Output Builder Section -->
             <div class="filterflex-section filterflex-output-builder-section">
-                <h3><?php esc_html_e( 'Filter Output', 'filterflex' ); ?></h3>
+                <h3><span class="dashicons dashicons-slides"></span> <?php esc_html_e( 'Filter Output', 'filterflex' ); ?></h3>
                 <div class="filterflex-output-builder-container">
                     <div class="filterflex-available-tags">
                         <h4><?php esc_html_e( 'Available Tags', 'filterflex' ); ?></h4>
