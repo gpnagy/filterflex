@@ -1,8 +1,8 @@
 === FilterFlex ===
-Contributors: your_wordpress_username
+Contributors: gpnagy
 Tags: filter, content-filter, custom-fields, taxonomy, categories
 Requires at least: 5.0
-Tested up to: 6.4
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv2 or later

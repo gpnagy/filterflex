@@ -148,7 +148,7 @@ function filterflex_ajax_get_location_values() {
                  $theme_templates = wp_get_theme()->get_page_templates();
                  $values = []; // Initialize as empty array
                  if ( ! empty( $theme_templates ) ) {
-                     $values['default'] = apply_filters( 'default_page_template_title', __( 'Default Template' ), 'filterflex' );
+                     $values['default'] = apply_filters( 'default_page_template_title', __( 'Default Template', 'filterflex' ), 'filterflex' );
                      foreach ( $theme_templates as $file => $name ) {
                          $values[ $file ] = $name;
                      }

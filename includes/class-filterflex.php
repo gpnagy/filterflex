@@ -191,10 +191,11 @@ class FilterFlex {
             if ( in_array( $taxonomy->name, $excluded_taxonomies, true ) ) {
                 continue;
             }
-            $checked = in_array( $taxonomy->name, $enabled_taxonomies, true ) ? 'checked="checked"' : '';
             echo '<li>';
             echo '<label>';
-            echo '<input type="checkbox" name="filterflex_settings[enabled_taxonomies][]" value="' . esc_attr( $taxonomy->name ) . '" ' . $checked . '> ';
+            echo '<input type="checkbox" name="filterflex_settings[enabled_taxonomies][]" value="' . esc_attr( $taxonomy->name ) . '"';
+            checked( in_array( $taxonomy->name, $enabled_taxonomies, true ) );
+            echo '> ';
             echo esc_html( $taxonomy->label ) . ' (<code>' . esc_html( $taxonomy->name ) . '</code>)';
             echo '</label>';
             echo '</li>';
@@ -248,9 +249,10 @@ class FilterFlex {
                 $taxonomy_obj = get_taxonomy( $slug );
                 if ( $taxonomy_obj ) {
                     if ($slug === 'category' || $slug === 'post_tag') continue; 
-                    
                     $placeholder = '{taxonomy:' . $slug . '}';
+                    
                     $dynamic_taxonomy_tags[$placeholder] = [
+                        /* translators: %s is the taxonomy label, e.g. "Genre (Taxonomy)" */
                         'label' => sprintf( __( '%s (Taxonomy)', 'filterflex' ), $taxonomy_obj->label ),
                         'type'  => 'tag'
                     ];
@@ -396,7 +398,7 @@ class FilterFlex {
                                         $value_style = ''; // Show if param selected
                                     }
                                     ?>
-                                    <select name="<?php echo esc_attr( $value_name ); ?>" class="filterflex-rule-value" data-saved-value="<?php echo esc_attr( $current_val ); ?>" <?php echo $value_style; ?>>
+                                    <select name="<?php echo esc_attr( $value_name ); ?>" class="filterflex-rule-value" data-saved-value="<?php echo esc_attr( $current_val ); ?>"<?php if ( $value_style ) { echo ' style=' . esc_attr( $value_style ); } ?>>
                                         <?php // Options will be populated by AJAX, render a placeholder initially ?>
                                         <option value=""><?php esc_html_e( '-- Loading... --', 'filterflex' ); ?></option>
                                     </select>
@@ -445,7 +447,7 @@ class FilterFlex {
                                     data-tag-type="<?php echo esc_attr( $tag_type ); ?>"
                                     data-tag-value="<?php echo esc_attr( $tag_placeholder ); ?>"
                                     draggable="true">
-                                    <?php echo $icon_html; ?><?php echo esc_html( $label ); ?>
+                                    <?php echo esc_html($icon_html); ?><?php echo esc_html( $label ); ?>
                                 </span>
                             <?php endforeach; ?>
                         </div>
@@ -482,7 +484,7 @@ class FilterFlex {
                                     $limit_style = ($type === 'limit_chars' || $type === 'limit_words') ? '' : 'style="display: none;"'; // Example
                                 ?>
                                  <div class="filterflex-transformation-row">
-                                    <select name="filterflex_transformations[<?php echo $index; ?>][type]" class="filterflex-transformation-type">
+                                    <select name="filterflex_transformations[<?php echo esc_attr($index); ?>][type]" class="filterflex-transformation-type">
                                         <option value=""><?php esc_html_e('-- Select Transformation --', 'filterflex'); ?></option>
                                         <option value="search_replace" <?php selected($type, 'search_replace'); ?>><?php esc_html_e('Search & Replace', 'filterflex'); ?></option>
                                         <option value="uppercase" <?php selected($type, 'uppercase'); ?>><?php esc_html_e('Uppercase', 'filterflex'); ?></option>
@@ -490,9 +492,9 @@ class FilterFlex {
                                         <?php // TODO: Add other transformation options ?>
                                     </select>
                                     <div class="filterflex-transformation-fields-row" style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                                        <input type="text" name="filterflex_transformations[<?php echo $index; ?>][search]" placeholder="<?php esc_attr_e('Search for...', 'filterflex'); ?>" value="<?php echo esc_attr($search); ?>" class="filterflex-transformation-search" <?php echo $search_replace_style; ?>>
-                                        <input type="text" name="filterflex_transformations[<?php echo $index; ?>][replace]" placeholder="<?php esc_attr_e('Replace with...', 'filterflex'); ?>" value="<?php echo esc_attr($replace); ?>" class="filterflex-transformation-replace" <?php echo $search_replace_style; ?>>
-                                        <input type="number" name="filterflex_transformations[<?php echo $index; ?>][limit]" placeholder="<?php esc_attr_e('Count', 'filterflex'); ?>" value="<?php echo esc_attr($limit); ?>" class="filterflex-transformation-limit small-text" <?php echo $limit_style; ?>>
+                                        <input type="text" name="filterflex_transformations[<?php echo esc_attr($index); ?>][search]" placeholder="<?php esc_attr_e('Search for...', 'filterflex'); ?>" value="<?php echo esc_attr($search); ?>" class="filterflex-transformation-search" <?php echo esc_attr($search_replace_style); ?>>
+                                        <input type="text" name="filterflex_transformations[<?php echo esc_attr($index); ?>][replace]" placeholder="<?php esc_attr_e('Replace with...', 'filterflex'); ?>" value="<?php echo esc_attr($replace); ?>" class="filterflex-transformation-replace" <?php echo esc_attr($search_replace_style); ?>>
+                                        <input type="number" name="filterflex_transformations[<?php echo esc_attr($index); ?>][limit]" placeholder="<?php esc_attr_e('Count', 'filterflex'); ?>" value="<?php echo esc_attr($limit); ?>" class="filterflex-transformation-limit small-text" <?php echo esc_attr($limit_style); ?>>
                                         <button type="button" class="button-link button-link-delete filterflex-remove-transformation"><?php esc_html_e('Remove', 'filterflex'); ?></button>
                                     </div>
                                   </div>
@@ -548,7 +550,7 @@ class FilterFlex {
         $templates = wp_get_theme()->get_page_templates();
         $options = [];
         if ( ! empty( $templates ) ) {
-            $options['default'] = apply_filters( 'default_page_template_title', __( 'Default Template' ), 'filterflex' );
+            $options['default'] = apply_filters( 'default_page_template_title', __( 'Default Template', 'filterflex' ), 'filterflex' );
             foreach ( $templates as $file => $name ) {
                 $options[ $file ] = $name;
             }
@@ -927,7 +929,7 @@ class FilterFlex {
             '{categories}'       => 'Category A, Category B',
             '{tags}'             => 'Tag1, Tag2',
             '{custom_field}'     => 'Some Custom Value',
-            '{date}'             => date( get_option( 'date_format' ) ),
+            '{date}'             => gmdate( get_option( 'date_format' ) ),
             '{author}'           => 'Admin User',
             // Add sample data for other tags if necessary
         ];
@@ -1160,6 +1162,11 @@ class FilterFlex {
 
         $current_screen = get_current_screen();
         if ( ! $current_screen || 'edit-filterflex_filter' !== $current_screen->id ) {
+            return;
+        }
+
+        // Don't show the message on the trash screen
+        if ( isset( $_GET['post_status'] ) && 'trash' === $_GET['post_status'] ) {
             return;
         }
 

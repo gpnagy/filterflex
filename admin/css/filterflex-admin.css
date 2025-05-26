@@ -1,11 +1,6 @@
 /* FilterFlex Admin Styles */
 
 /* General Metabox Structure */
-.filterflex-metabox-content .filterflex-section {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-}
 
 .filterflex-metabox-content .filterflex-section:last-child {
     border-bottom: none;
@@ -738,7 +733,6 @@ input:not(:checked) ~ .filterflex-status-text {
 .filterflex-section h3 {
     font-size: 1.4em; /* Slightly larger than WP default h2 in metabox */
     font-weight: 600;
-    padding-bottom: 15px;
     margin-top: 0; /* Already handled by section padding-top */
     display: flex;
     align-items: center;
@@ -746,15 +740,13 @@ input:not(:checked) ~ .filterflex-status-text {
 
 .filterflex-section h3 .dashicons {
     margin-right: 8px;
-    font-size: 1em; /* Match title font size or be slightly smaller/larger as per visual preference */
-    line-height: inherit;
+    font-size: 1.1em; /* Match title font size or be slightly smaller/larger as per visual preference */
 }
 
 /* More specific styling for h4 within sections if needed, e.g., Filter Output sub-sections */
 .filterflex-section h4 {
     font-size: 1.1em;
     font-weight: 600;
-    margin-top: 15px;
     margin-bottom: 10px;
 }
 
@@ -828,10 +820,6 @@ input:not(:checked) ~ .filterflex-status-text {
     margin-left: 5px;
 }
 
-#filterflex_settings_metabox .filterflex-add-rule-group {
-    margin-top: 10px;
-}
-
 /* Ensure styles are scoped - most selectors above are already scoped with #filterflex_settings_metabox */
 /* If any global styles were added, they would need scoping. */
 
@@ -842,7 +830,6 @@ input:not(:checked) ~ .filterflex-status-text {
 }
 .filterflex-available-tags,
 .filterflex-builder-area {
-    flex: 1;
     padding: 15px;
     background-color: #f9f9f9;
     border: 1px solid #e0e0e0;
@@ -880,4 +867,15 @@ input:not(:checked) ~ .filterflex-status-text {
     background-color: #fdfdfd;
     border: 1px solid #e0e0e0;
     border-radius: 3px;
+}
+
+/* Hide postbox header on filter edit screen */
+.post-type-filterflex_filter .postbox .postbox-header {
+    display: none;
+}
+
+/* Adjust spacing for the content area */
+.post-type-filterflex_filter .postbox .inside {
+    margin-top: 0;
+    padding-top: 0;
 }
