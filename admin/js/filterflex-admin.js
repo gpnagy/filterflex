@@ -673,4 +673,42 @@ jQuery(document).ready(function($) {
         });
     }
 
-});
+    // Make the builder area a droppable target
+    $builderVisualInput.droppable({
+        over: function(event, ui) {
+            // Add the drag-over class on dragover
+            $(this).addClass('drag-over');
+        },
+        out: function(event, ui) {
+            // Remove the drag-over class on dragleave
+            $(this).removeClass('drag-over');
+        },
+        drop: function(event, ui) {
+            // Remove the drag-over class on drop
+            $(this).removeClass('drag-over');
+            // Remove any existing drop indicators
+            $('.drop-indicator').remove();
+
+            const $draggedItem = ui.draggable;
+            const itemType = $draggedItem.data('tag-type');
+            const itemValue = $draggedItem.data('tag-value');
+            const itemLabel = $draggedItem.text().trim(); // Get the text content for label
+
+            // Determine where to insert the new element
+            const $target = $(event.target);
+
+            // If dropping onto an existing builder item, insert before it.
+            if ($target.hasClass('filterflex-builder-item')) {
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                $newElement.insertBefore($target);
+            } else {
+                // Otherwise, append to the end of the builder area.
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                $builderVisualInput.append($newElement);
+            }
+
+            updateHiddenPatternInput();
+        }
+    });
+
+}); // End jQuery(document).ready

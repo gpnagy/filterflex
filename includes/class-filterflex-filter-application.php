@@ -476,11 +476,6 @@ class FilterFlex_Filter_Application {
 
         // Check if JSON decoding was successful and if it's an array
         if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $pattern_data ) ) {
-            // Fallback or error handling:
-            // Option 1: Return original content if pattern is invalid
-            // return $original_content;
-            // Option 2: Log an error and return an empty string or a specific error message
-            error_log( 'FilterFlex: Invalid output pattern JSON for post ID ' . $post_id . '. Pattern: ' . $pattern_json );
             // Option 3: Attempt to use original content if the special tag {filtered_element} was the intent.
             // This is a basic fallback if the pattern was simply the filtered element.
             if ( strpos( $pattern_json, '{filtered_element}' ) !== false ) {
@@ -530,9 +525,6 @@ class FilterFlex_Filter_Application {
     private function process_tag_item( $tag_item, $original_content, $post_id ) {
         $tag_placeholder = $tag_item['value']; // e.g., "{categories}", "{custom_field}"
 
-        // Debug logging
-        error_log('Processing tag item: ' . print_r($tag_item, true));
-
         // Handle the {filtered_element} tag directly as it uses the $original_content
         if ( $tag_placeholder === '{filtered_element}' ) {
             return $original_content;
@@ -540,12 +532,9 @@ class FilterFlex_Filter_Application {
 
         // Handle {custom_field} specifically because it needs the meta key
         if ( $tag_placeholder === '{custom_field}' ) {
-            error_log('Processing custom field tag with meta: ' . print_r($tag_item['meta'], true));
             if ( isset( $tag_item['meta']['key'] ) && ! empty( $tag_item['meta']['key'] ) ) {
                 $field_key = $tag_item['meta']['key'];
-                error_log('Getting custom field value for key: ' . $field_key);
                 $value = get_post_meta( $post_id, $field_key, true );
-                error_log('Custom field value: ' . $value);
                 return esc_html( $value );
             }
             return ''; // No key provided for custom field
@@ -572,7 +561,6 @@ class FilterFlex_Filter_Application {
 
         // If the tag is not registered or callable, return the placeholder itself or an empty string
         // Returning the placeholder can help debug if a tag is misspelled or not registered.
-        // return $tag_placeholder;
         return ''; // Or return empty string to not show unknown tags
     }
 

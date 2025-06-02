@@ -120,7 +120,7 @@ add_action( 'wp_ajax_filterflex_get_location_values', 'filterflex_ajax_get_locat
  */
 function filterflex_ajax_get_location_values() {
     // Verify nonce
-    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( $_POST['nonce'] ), 'filterflex_location_nonce' ) ) {
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'filterflex_location_nonce' ) ) {
         wp_send_json_error( [ 'message' => __( 'Nonce verification failed.', 'filterflex' ) ], 403 );
     }
 

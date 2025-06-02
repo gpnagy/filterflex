@@ -128,6 +128,20 @@ class FilterFlex {
             'filterflex-settings', // Page slug
             'filterflex_taxonomy_settings_section' // Section ID
         );
+
+        add_settings_section(
+            'filterflex_uninstall_settings_section',
+            __( 'Uninstall Settings', 'filterflex' ),
+            null,
+            'filterflex-settings'
+        );
+        add_settings_field(
+            'filterflex_remove_data_on_uninstall',
+            __( 'Remove all plugin data on uninstall', 'filterflex' ),
+            [ $this, 'render_remove_data_on_uninstall_field' ],
+            'filterflex-settings',
+            'filterflex_uninstall_settings_section'
+        );
     }
 
     /**
@@ -141,6 +155,7 @@ class FilterFlex {
         } else {
             $new_input['enabled_taxonomies'] = [];
         }
+        $new_input['remove_data_on_uninstall'] = !empty($input['remove_data_on_uninstall']) ? 1 : 0;
         return $new_input;
     }
 
@@ -151,6 +166,7 @@ class FilterFlex {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'FilterFlex Settings', 'filterflex' ); ?></h1>
+            <?php wp_nonce_field( 'filterflex_admin_nonce' ); ?>
             <form method="post" action="options.php">
                 <?php
                 settings_fields( 'filterflex_settings_group' ); // Output nonce, action, and option_page fields for a settings page.
@@ -202,6 +218,16 @@ class FilterFlex {
         }
         echo '</ul>';
         echo '<p class="description">' . esc_html__( 'Select taxonomies to make them available as tags (e.g., {taxonomy:slug}) in the filter output builder.', 'filterflex' ) . '</p>';
+    }
+
+    /**
+     * Render the 'remove_data_on_uninstall' settings field.
+     */
+    public function render_remove_data_on_uninstall_field() {
+        $options = get_option('filterflex_settings');
+        $checked = isset($options['remove_data_on_uninstall']) && $options['remove_data_on_uninstall'] ? 'checked' : '';
+        echo '<label><input type="checkbox" name="filterflex_settings[remove_data_on_uninstall]" value="1" ' . esc_attr($checked) . '> ' . esc_html__('Remove all plugin data when the plugin is deleted.', 'filterflex') . '</label>';
+        echo '<p class="description">' . esc_html__('If checked, all FilterFlex settings, filters, and data will be permanently deleted when you uninstall the plugin. This cannot be undone.', 'filterflex') . '</p>';
     }
 
     /**
@@ -447,7 +473,7 @@ class FilterFlex {
                                     data-tag-type="<?php echo esc_attr( $tag_type ); ?>"
                                     data-tag-value="<?php echo esc_attr( $tag_placeholder ); ?>"
                                     draggable="true">
-                                    <?php echo esc_html($icon_html); ?><?php echo esc_html( $label ); ?>
+                                    <?php echo $icon_html; ?><?php echo esc_html( $label ); ?>
                                 </span>
                             <?php endforeach; ?>
                         </div>
@@ -563,14 +589,15 @@ class FilterFlex {
      */
     public function save_settings_metabox( $post_id, $post ) {
         // Nonce check, permission check, autosave check...
-        if ( ! isset( $_POST['filterflex_settings_nonce'] ) || ! wp_verify_nonce( $_POST['filterflex_settings_nonce'], 'filterflex_save_settings' ) ) return;
+        $nonce = isset( $_POST['filterflex_settings_nonce'] ) ? wp_unslash($_POST['filterflex_settings_nonce']) : '';
+        if ( ! $nonce || ! wp_verify_nonce( $nonce, 'filterflex_save_settings' ) ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
         if ( 'filterflex_filter' !== $post->post_type ) return;
 
         // Ensure post status is preserved
         if (isset($_POST['post_status'])) {
-            $post_status = sanitize_key($_POST['post_status']);
+            $post_status = sanitize_key(wp_unslash($_POST['post_status']));
             if (in_array($post_status, ['publish', 'draft'], true)) {
                 remove_action('save_post_filterflex_filter', [$this, 'save_settings_metabox']);
                 wp_update_post([
@@ -584,21 +611,24 @@ class FilterFlex {
         // --- Sanitize and Save Location Rules ---
         $sanitized_rules = [];
         if ( isset( $_POST['filterflex_rules'] ) && is_array( $_POST['filterflex_rules'] ) ) {
-            foreach ( $_POST['filterflex_rules'] as $group_index => $rule_group ) {
-                if ( is_array( $rule_group ) ) {
-                     $sanitized_group = [];
-                     foreach ($rule_group as $rule_index => $rule) {
-                        if ( is_array( $rule ) && isset( $rule['param'], $rule['operator'], $rule['value'] ) ) {
-                            $sanitized_group[] = [
-                                'param'    => sanitize_text_field( $rule['param'] ),
-                                'operator' => sanitize_text_field( $rule['operator'] ),
-                                'value'    => sanitize_text_field( $rule['value'] ),
-                            ];
+            $raw_rules = wp_unslash($_POST['filterflex_rules']); // Unslash the whole array
+            if ( is_array( $raw_rules ) ) {
+                foreach ( $raw_rules as $group_index => $rule_group ) {
+                    if ( is_array( $rule_group ) ) {
+                        $sanitized_group = [];
+                        foreach ( $rule_group as $rule_index => $rule ) {
+                            if ( is_array( $rule ) && isset( $rule['param'], $rule['operator'], $rule['value'] ) ) {
+                                $sanitized_group[] = [
+                                    'param'    => sanitize_text_field( $rule['param'] ),
+                                    'operator' => sanitize_text_field( $rule['operator'] ),
+                                    'value'    => sanitize_text_field( $rule['value'] ),
+                                ];
+                            }
                         }
-                     }
-                     if (!empty($sanitized_group)) {
-                        $sanitized_rules[] = $sanitized_group;
-                     }
+                        if ( ! empty( $sanitized_group ) ) {
+                            $sanitized_rules[] = $sanitized_group;
+                        }
+                    }
                 }
             }
         }
@@ -607,9 +637,10 @@ class FilterFlex {
         // --- Sanitize and Save Filterable Element ---
         $selected_element = '';
         if ( isset( $_POST['filterflex_filterable_element'] ) ) {
+            $raw_element = sanitize_text_field(wp_unslash( $_POST['filterflex_filterable_element'] ));
             $available_elements = $this->filter_application->get_filterable_elements();
-            if ( array_key_exists( $_POST['filterflex_filterable_element'], $available_elements ) ) {
-                $selected_element = sanitize_key( $_POST['filterflex_filterable_element'] );
+            if ( array_key_exists( $raw_element, $available_elements ) ) {
+                $selected_element = sanitize_key( $raw_element );
             }
         }
         update_post_meta( $post_id, '_filterflex_filterable_element', $selected_element );
@@ -617,7 +648,7 @@ class FilterFlex {
         // --- Sanitize and Save Priority ---
         $priority = 10;
         if ( isset( $_POST['filterflex_priority'] ) ) {
-            $priority = absint( $_POST['filterflex_priority'] );
+            $priority = absint( wp_unslash( $_POST['filterflex_priority'] ) );
         }
         update_post_meta( $post_id, '_filterflex_priority', $priority );
 
@@ -625,7 +656,7 @@ class FilterFlex {
         $output_pattern_json_to_save = '[]'; // Default to an empty valid JSON array string
 
         if ( isset( $_POST['filterflex_output_pattern'] ) ) {
-            $raw_pattern_json = wp_unslash( $_POST['filterflex_output_pattern'] );
+            $raw_pattern_json = sanitize_text_field(wp_unslash( $_POST['filterflex_output_pattern'] ));
             $decoded_pattern = json_decode( $raw_pattern_json, true );
 
             // Check if JSON decoding was successful and resulted in an array
@@ -673,7 +704,8 @@ class FilterFlex {
         // --- Sanitize and Save Transformations ---
         $sanitized_transformations = [];
          if ( isset( $_POST['filterflex_transformations'] ) && is_array( $_POST['filterflex_transformations'] ) ) {
-            foreach ( $_POST['filterflex_transformations'] as $index => $transformation ) {
+            $raw_transformations = sanitize_text_field(wp_unslash( $_POST['filterflex_transformations'] ));
+            foreach ( $raw_transformations as $index => $transformation ) {
                  if ( is_array( $transformation ) && isset( $transformation['type'] ) && !empty( $transformation['type'] ) ) {
                      $sanitized_transform = [ 'type' => sanitize_text_field( $transformation['type'] ) ];
                      if (isset($transformation['search'])) $sanitized_transform['search'] = sanitize_text_field( $transformation['search'] );
@@ -688,7 +720,7 @@ class FilterFlex {
         // --- Sanitize and Save Apply Area ---
         $apply_area_value = 'frontend'; // Default value
         if ( isset( $_POST['filterflex_apply_area'] ) ) {
-            $submitted_apply_area = sanitize_key( $_POST['filterflex_apply_area'] );
+            $submitted_apply_area = sanitize_key( wp_unslash( $_POST['filterflex_apply_area'] ) );
             if ( in_array( $submitted_apply_area, [ 'frontend', 'admin', 'both' ], true ) ) {
                 $apply_area_value = $submitted_apply_area;
             }
@@ -875,12 +907,12 @@ class FilterFlex {
     public function ajax_get_preview() {
         check_ajax_referer( 'filterflex_preview_action', 'security_token' );
 
-        $pattern_json = isset( $_POST['pattern'] ) ? wp_unslash( $_POST['pattern'] ) : '[]';
-        $transformations_raw = isset( $_POST['transformations'] ) && is_array( $_POST['transformations'] ) ? $_POST['transformations'] : [];
+        $pattern_json = isset( $_POST['pattern'] ) ? sanitize_text_field(wp_unslash( $_POST['pattern'] )) : '[]';
+        $transformations_raw = isset( $_POST['transformations'] ) && is_array( $_POST['transformations'] ) ? sanitize_text_field(wp_unslash( $_POST['transformations'] )) : [];
 
         $pattern_data = json_decode( $pattern_json, true );
         // Use sanitize_text_field for sanitizing the select field value
-        $filterable_element = isset( $_POST['filterable_element'] ) ? sanitize_text_field( $_POST['filterable_element'] ) : '';
+        $filterable_element = isset( $_POST['filterable_element'] ) ? sanitize_text_field(wp_unslash($_POST['filterable_element'])) : '';
 
         $transformations = [];
 
@@ -896,7 +928,7 @@ class FilterFlex {
         }
 
         if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $pattern_data ) ) {
-            wp_send_json_error( [ 'message' => 'Invalid pattern format.', 'received' => $_POST['pattern'] ] );
+            wp_send_json_error( [ 'message' => 'Invalid pattern format.', 'received' => sanitize_text_field(wp_unslash($_POST['pattern'])) ] );
             return;
         }
 
@@ -1166,7 +1198,7 @@ class FilterFlex {
         }
 
         // Don't show the message on the trash screen
-        if ( isset( $_GET['post_status'] ) && 'trash' === $_GET['post_status'] ) {
+        if ( isset( $_GET['post_status'] ) && 'trash' === sanitize_key( wp_unslash( $_GET['post_status'] ) ) ) {
             return;
         }
 
