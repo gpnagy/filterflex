@@ -1,6 +1,15 @@
 // admin/js/filterflex-admin.js
 jQuery(document).ready(function($) {
 
+    // Add console log to check available tags
+    console.log('FilterFlex Available Tags:', filterFlexData.available_tags);
+
+    // Add form submit handler for debugging
+    $('#post').on('submit', function() {
+        const patternData = JSON.parse($('#filterflex-output-pattern-input').val());
+        console.log('Form submit - Pattern Data:', patternData);
+    });
+
     // --- Metabox Toggle ---
     $('.filterflex-metabox-header').on('click', function() {
         const $header = $(this);
@@ -18,6 +27,10 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // --- Output Builder: Remove Filtered Element from Available Tags ---
+    $('.filterflex-available-tags .filterflex-tags-list').find('.draggable-tag[data-tag-value="{filtered_element}"]').remove();
+
 
     // --- Location Rules ---
     const rulesContainer = $('#filterflex-location-rules-container');
@@ -69,9 +82,13 @@ jQuery(document).ready(function($) {
                     });
 
                     // Try to re-select the original saved value if it exists (only on initial load)
+                    // OR set default 'Posts' if param is 'post_type' and 'post' option exists
                     if (initialLoad && savedVal !== null && response.data.values.hasOwnProperty(savedVal)) {
                         $valueSelect.val(savedVal);
-                    } else {
+                    } else if ((!initialLoad || (initialLoad && savedVal === null)) && param === 'post_type' && response.data.values.hasOwnProperty('post')) {
+                         $valueSelect.val('post'); // Set default to 'Posts'
+                    }
+                    else {
                          $valueSelect.val(''); // Select default if no saved value or not found
                     }
                      $valueSelect.show();
@@ -128,16 +145,28 @@ jQuery(document).ready(function($) {
         const groupIdx = $group.index();
         const newRowIndex = $group.find('.filterflex-rule-row').length;
 
-        // Update name attributes and clear values for the new row
+        // Update name attributes and set default values for the new row
         $newRow.find('select, input').each(function() {
-            const name = $(this).attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIdx + '][' + newRowIndex + ']');
-            $(this).attr('name', name).val('');
+            const $this = $(this);
+            const name = $this.attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIdx + '][' + newRowIndex + ']');
+            $this.attr('name', name);
+
+            // Set default values
+            if ($this.hasClass('filterflex-rule-param')) {
+                $this.val('post_type'); // Default to Post Type
+            } else if ($this.hasClass('filterflex-rule-operator')) {
+                $this.val('=='); // Default to is equal to
+            } else {
+                $this.val(''); // Clear other inputs
+            }
         });
 
         // Clear and hide the value dropdown initially
         $newRow.find('.filterflex-rule-value').empty().hide();
         $newRow.appendTo($group);
-        // updateValueOptions($newRow); // Don't update yet, wait for param selection
+
+        // Trigger change on param to load value options and set default 'Posts'
+        $newRow.find('.filterflex-rule-param').trigger('change');
     });
 
      // Remove Rule
@@ -164,17 +193,36 @@ jQuery(document).ready(function($) {
         const $newGroup = $('<div class="filterflex-rule-group"></div>');
         const $newRow = $firstGroup.find('.filterflex-rule-row:first').clone();
 
-        // Update name attributes and clear values for the new row in the new group
+        // Update name attributes and set default values for the new row in the new group
         $newRow.find('select, input').each(function() {
-            const name = $(this).attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIndex + '][0]');
-            $(this).attr('name', name).val('');
+            const $this = $(this);
+            const name = $this.attr('name').replace(/\[\d+\]\[\d+\]/g, '[' + groupIndex + '][0]');
+            $this.attr('name', name);
+
+            // Set default values
+            if ($this.hasClass('filterflex-rule-param')) {
+                $this.val('post_type'); // Default to Post Type
+            } else if ($this.hasClass('filterflex-rule-operator')) {
+                $this.val('=='); // Default to is equal to
+            } else {
+                $this.val(''); // Clear other inputs
+            }
         });
 
          // Clear and hide the value dropdown initially
         $newRow.find('.filterflex-rule-value').empty().hide();
         $newRow.appendTo($newGroup);
+
+        // Add 'or' label after the last rule group if it's not the first group
+        const $existingGroups = rulesContainer.find('.filterflex-rule-group');
+        if ($existingGroups.length > 0) {
+            $('<div class="filterflex-or-label">or</div>').insertAfter($existingGroups.last());
+        }
+
         $newGroup.appendTo(rulesContainer);
-        // updateValueOptions($newRow); // Don't update yet, wait for param selection
+
+        // Trigger change on param to load value options and set default 'Posts'
+        $newRow.find('.filterflex-rule-param').trigger('change');
     });
 
     // --- Output Builder ---
@@ -189,8 +237,24 @@ jQuery(document).ready(function($) {
 
         if (type === 'tag') {
             $itemWrapper.addClass('filterflex-tag-item')
-                .attr('data-tag', value)
-                .text(label);
+                .attr('data-tag', value);
+            
+            // Special handling for custom field tag
+            if (value === '{custom_field}') {
+                // Store the tag value as data attribute
+                $itemWrapper.attr('data-tag', '{custom_field}');
+                
+                const $labelSpan = $('<span>').addClass('tag-label').text('Custom Field: ');
+                const $metaInput = $('<input>')
+                    .attr('type', 'text')
+                    .addClass('custom-field-meta-input')
+                    .attr('placeholder', 'Enter field name');
+                
+                $itemWrapper.append($labelSpan).append($metaInput);
+            } else {
+                $itemWrapper.text(label);
+            }
+            
             if (value === '{filtered_element}') {
                 $itemWrapper.addClass('non-removable');
             } else {
@@ -209,7 +273,7 @@ jQuery(document).ready(function($) {
             $itemWrapper.addClass('filterflex-separator-wrapper');
             const $select = $('<select>').addClass('filterflex-separator-select');
             const options = {
-                "__{{SPACE}}__": " ", // Use a placeholder for space value, display text is still a space
+                "__{{SPACE}}__": "␣",
                 "|": "|",
                 "[": "[",
                 "]": "]",
@@ -222,8 +286,6 @@ jQuery(document).ready(function($) {
             $.each(options, function(val, text) {
                 $select.append($('<option>', { value: val, text: text }));
             });
-            // Ensure $select.val(value) is called *after* all options are appended
-            // and only if 'value' is not undefined or null (it can be " " which is fine).
             if (typeof value !== 'undefined' && value !== null) {
                 $select.val(value);
             }
@@ -239,21 +301,38 @@ jQuery(document).ready(function($) {
         return createBuilderElement('text', value);
     }
 
-    // Function to update the hidden input with the structured pattern (JSON)
+    // Modify updateHiddenPatternInput to properly handle custom field meta
     function updateHiddenPatternInput() {
         const patternData = [];
         $builderVisualInput.find('.filterflex-builder-item').each(function() {
             const $item = $(this);
             if ($item.hasClass('filterflex-tag-item')) {
-                patternData.push({ type: 'tag', value: $item.data('tag') });
+                const tagValue = $item.data('tag');
+                let tagData = { type: 'tag', value: tagValue };
+                
+                // Handle custom field meta
+                if (tagValue === '{custom_field}') {
+                    const metaKey = $item.find('.custom-field-meta-input').val().trim();
+                    console.log('Custom field meta key:', metaKey); // Debug log
+                    if (metaKey) {
+                        tagData.meta = { key: metaKey };
+                        console.log('Tag data with meta:', tagData); // Debug log
+                    }
+                }
+                
+                patternData.push(tagData);
             } else if ($item.hasClass('filterflex-text-input-wrapper')) {
                 const value = $item.find('.filterflex-static-text-input').val();
-                patternData.push({ type: 'text', value: value }); // Save even if empty, PHP will sanitize
+                patternData.push({ type: 'text', value: value });
             } else if ($item.hasClass('filterflex-separator-wrapper')) {
                 const value = $item.find('.filterflex-separator-select').val();
                 patternData.push({ type: 'separator', value: value });
             }
         });
+
+        // For debugging - log the pattern data before saving
+        console.log('Saving pattern data:', patternData);
+        
         $patternHiddenInput.val(JSON.stringify(patternData));
         updatePreview();
     }
@@ -270,33 +349,39 @@ jQuery(document).ready(function($) {
         }
 
         if (!Array.isArray(patternData)) {
-             console.error("Saved pattern is not an array:", patternData);
-             patternData = [];
+            console.error("Saved pattern is not an array:", patternData);
+            patternData = [];
         }
 
         patternData.forEach(item => {
             if (item.type === 'tag') {
-                let label = item.value; // Default label from value
-                // Attempt to find a more descriptive label from available tags
-                const $foundTag = $availableTagsContainer.find(`.draggable-tag[data-tag-value="${item.value}"]`);
-                if ($foundTag.length) {
-                    label = $foundTag.text();
+                let label = item.value;
+                let tagValue = item.value;
+
+                // Check if it's a custom field tag with saved meta
+                if (tagValue === '{custom_field}') {
+                    const metaKey = item.meta?.key || '';
+                    const baseLabel = filterFlexData.available_tags['{custom_field}']?.label || 'Custom Field';
+                    $newElement = createBuilderElement('tag', tagValue, baseLabel);
+                    // Set the meta key value in the input
+                    $newElement.find('.custom-field-meta-input').val(metaKey);
                 } else {
-                     // Fallback for tags like {filtered_element} if not in draggable list or for custom ones
-                     label = item.value.replace(/[{}]/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    // For other tags
+                    const $foundTag = $availableTagsContainer.find(`.draggable-tag[data-tag-value="${item.value}"]`);
+                    if ($foundTag.length) {
+                        label = $foundTag.text();
+                    } else {
+                        label = item.value.replace(/[{}]/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    }
+                    $newElement = createBuilderElement('tag', tagValue, label);
                 }
-                $builderVisualInput.append(createBuilderElement('tag', item.value, label));
+                $builderVisualInput.append($newElement);
             } else if (item.type === 'text') {
                 $builderVisualInput.append(createBuilderElement('text', item.value));
             } else if (item.type === 'separator') {
                 $builderVisualInput.append(createBuilderElement('separator', item.value));
             }
         });
-
-        // No longer add an initial empty text input. Builder starts empty.
-        // if ($builderVisualInput.children().length === 0) {
-        //      $builderVisualInput.append(createBuilderTextInputElement());
-        // }
     }
 
     // --- Drag and Drop & Sortable ---
@@ -332,14 +417,11 @@ jQuery(document).ready(function($) {
 
     // Make the builder area droppable to accept tags from the available list
     $builderVisualInput.droppable({
-        accept: '.draggable-tag', // Accept only the tags from the list
-        hoverClass: 'filterflex-drag-over-builder', // Use existing class for visual feedback
+        accept: '.draggable-tag',
+        hoverClass: 'filterflex-drag-over-builder',
         drop: function(event, ui) {
-            // $(this) is the droppable element (#filterflex-builder-visual-input)
             const $droppableContainer = $(this);
-            // ui.draggable is the original draggable element from the list
             const $draggedTag = ui.draggable;
-
             const tagValue = $draggedTag.data('tag-value');
             const tagLabel = $draggedTag.text();
             const tagType = $draggedTag.data('tag-type');
@@ -348,21 +430,16 @@ jQuery(document).ready(function($) {
             if (tagType === 'text') {
                 $newElement = createBuilderElement('text', '');
             } else if (tagType === 'separator') {
-                $newElement = createBuilderElement('separator', ' '); // Default to space
-            } else { // 'tag'
+                $newElement = createBuilderElement('separator', "__{{SPACE}}__");
+            } else {
+                if (tagValue === '{filtered_element}' && $droppableContainer.find('.filterflex-tag-item[data-tag="{filtered_element}"]').length > 0) {
+                    return;
+                }
                 $newElement = createBuilderElement('tag', tagValue, tagLabel);
             }
 
-            // Append the new element to the droppable container (the builder input)
-            // Note: This appends to the end. If position matters, more complex logic involving ui.position is needed.
-            // For now, let's append to the end. The user can then sort it.
             $droppableContainer.append($newElement);
-
-            // Update the hidden input
             updateHiddenPatternInput();
-
-            // Optional: Refresh sortable to recognize the new item if needed
-            // $droppableContainer.sortable('refresh');
         }
     });
 
@@ -484,11 +561,17 @@ jQuery(document).ready(function($) {
     // --- Live Preview ---
     const $previewOutput = $('#filterflex-preview-output');
 
+    const $filterableElementSelect = $('#filterflex-filterable-element'); // Get the select element
+
     function updatePreview() {
         // 1. Get the current builder pattern from the hidden input
         const pattern = $patternHiddenInput.val();
 
-        // 2. Get the current transformation settings
+        // 2. Get the selected filterable element
+        const filterableElement = $filterableElementSelect.val();
+        console.log('Selected filterable element:', filterableElement); // Log the selected element
+
+        // 3. Get the current transformation settings
         const transformations = [];
         $transContainer.find('.filterflex-transformation-row').each(function() {
             const $row = $(this);
@@ -516,6 +599,7 @@ jQuery(document).ready(function($) {
                  security_token: filterFlexData.preview_nonce, // Use a specific nonce for this action
                  pattern: pattern,
                  transformations: transformations,
+                 filterable_element: filterableElement, // Pass the selected element
                  // Optionally pass sample post ID or context
              },
              beforeSend: function() {
@@ -542,4 +626,89 @@ jQuery(document).ready(function($) {
     // Initial preview update on load
     updatePreview();
 
-});
+    // Update preview when the filterable element changes
+    $filterableElementSelect.on('change', function() {
+        updatePreview();
+    });
+
+    // Add event handler for custom field meta input changes
+    $builderVisualInput.on('input change', '.custom-field-meta-input', function() {
+        updateHiddenPatternInput();
+    });
+
+    // --- Status Toggle ---
+    if ($('.filterflex-status-toggle').length) {
+        // Hide the default post status dropdown
+        $('#post-status-select').hide();
+        
+        // Update the post status when the toggle changes
+        $('.post-status-toggle').on('change', function() {
+            const isActive = $(this).prop('checked');
+            const newStatus = isActive ? 'publish' : 'draft';
+            
+            // Update all WordPress status fields
+            $('#hidden-post-status').val(newStatus);
+            $('#post-status-display').text(isActive ? 'Published' : 'Draft');
+            
+            // Update our custom status text
+            $(this).closest('.filterflex-switch-wrapper').find('.filterflex-status-text').text(isActive ? 'Active' : 'Inactive');
+
+            // If the save button says "Publish", update it to "Update" when status changes
+            if ($('#publish').val() === 'Publish') {
+                $('#publish').val('Update');
+            }
+        });
+
+        // Add form submit handler to ensure status is preserved
+        $('#post').on('submit', function() {
+            const isActive = $('.post-status-toggle').prop('checked');
+            const currentStatus = isActive ? 'publish' : 'draft';
+            
+            // Ensure the status is set correctly before submission
+            $('input[name="post_status"]').val(currentStatus);
+            $('#hidden-post-status').val(currentStatus);
+            
+            // Don't prevent form submission
+            return true;
+        });
+    }
+
+    // Make the builder area a droppable target
+    $builderVisualInput.droppable({
+        over: function(event, ui) {
+            // Add the drag-over class on dragover
+            $(this).addClass('drag-over');
+        },
+        out: function(event, ui) {
+            // Remove the drag-over class on dragleave
+            $(this).removeClass('drag-over');
+        },
+        drop: function(event, ui) {
+            // Remove the drag-over class on drop
+            $(this).removeClass('drag-over');
+            // Remove any existing drop indicators
+            $('.drop-indicator').remove();
+
+            const $draggedItem = ui.draggable;
+            const itemType = $draggedItem.data('tag-type');
+            const itemValue = $draggedItem.data('tag-value');
+            const itemLabel = $draggedItem.text().trim(); // Get the text content for label
+
+            // Determine where to insert the new element
+            const $target = $(event.target);
+
+            // If dropping onto an existing builder item, insert before it.
+            if ($target.hasClass('filterflex-builder-item')) {
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                $newElement.insertBefore($target);
+            } else {
+                // Otherwise, append to the end of the builder area.
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                $builderVisualInput.append($newElement);
+            }
+
+            updateHiddenPatternInput();
+        }
+    });
+
+}); // End jQuery(document).ready

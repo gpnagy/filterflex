@@ -77,6 +77,12 @@ class FilterFlex_Filter_Application {
                 'priority' => 10,
                 'args' => 1,
             ],
+            'get_the_archive_title' => [
+                'label' => __( 'Archive Page Title', 'filterflex' ),
+                'callback' => [ $this, 'filter_get_the_archive_title' ],
+                'priority' => 10,
+                'args' => 1, // Title
+            ],
         ];
 
         // Allow plugins/themes to add custom filterable elements
@@ -211,24 +217,28 @@ class FilterFlex_Filter_Application {
     }
 
     /**
+     * Filter the archive page title.
+     *
+     * @param string $title The archive title.
+     * @return string The filtered archive title.
+     */
+    public function filter_get_the_archive_title( $title ) {
+        // The hook 'get_the_archive_title' provides the title string.
+        // We don't have a specific post or term ID in this general archive context.
+        // We'll pass 0 for post_id in apply_filters_to_element as it's not directly available.
+        return $this->apply_filters_to_element( 'get_the_archive_title', $title, 0 );
+    }
+
+
+    /**
      * Apply filters to an element.
      *
      * @param string $hook The filter hook.
      * @param string $content The content to filter.
-     * @param int    $post_id The post ID (optional).
+     * @param int    $context_id The context ID (post ID, term ID, etc.).
      * @return string The filtered content.
      */
-    private function apply_filters_to_element( $hook, $content, $post_id = 0 ) {
-        // If no post ID is provided, try to get it from the current post
-        if ( ! $post_id ) {
-            $post_id = get_the_ID();
-        }
-
-        // If still no post ID, return the content unmodified
-        if ( ! $post_id ) {
-            return $content;
-        }
-
+    private function apply_filters_to_element( $hook, $content, $context_id = 0 ) {
         // Get all active filters for this hook
         $filters = $this->get_active_filters( $hook );
 
@@ -241,11 +251,11 @@ class FilterFlex_Filter_Application {
         usort( $filters, function( $a, $b ) {
             $a_priority = get_post_meta( $a->ID, '_filterflex_priority', true );
             $b_priority = get_post_meta( $b->ID, '_filterflex_priority', true );
-            
+
             // Default to 10 if not set
             $a_priority = $a_priority ? intval( $a_priority ) : 10;
             $b_priority = $b_priority ? intval( $b_priority ) : 10;
-            
+
             return $b_priority - $a_priority; // Higher priority first
         } );
 
@@ -253,6 +263,8 @@ class FilterFlex_Filter_Application {
         $filtered_content = $content;
         foreach ( $filters as $filter ) {
             // Check if the filter applies to the current context
+            // We might need to pass the context_id to filter_applies_to_context if location rules
+            // need to check against the specific term or user. For now, it only checks page context.
             if ( ! $this->filter_applies_to_context( $filter->ID ) ) {
                 continue;
             }
@@ -264,12 +276,13 @@ class FilterFlex_Filter_Application {
             }
 
             // Process the output pattern
-            $output = $this->process_output_pattern( $output_config['pattern'], $filtered_content, $post_id );
+            // Pass the context_id to process_output_pattern so tags like {post_id} or {term_id} work
+            $output = $this->process_output_pattern( $output_config['pattern'], $filtered_content, $context_id );
 
             // Apply transformations
             $transformations = get_post_meta( $filter->ID, '_filterflex_transformations', true );
             if ( is_array( $transformations ) && ! empty( $transformations ) ) {
-                $output = $this->apply_transformations( $output, $transformations );
+                $output = $this->apply_transformations( $output, $transformations, $hook ); // Pass hook for HTML transformations
             }
 
             // Replace the content with the processed output
@@ -463,11 +476,6 @@ class FilterFlex_Filter_Application {
 
         // Check if JSON decoding was successful and if it's an array
         if ( json_last_error() !== JSON_ERROR_NONE || ! is_array( $pattern_data ) ) {
-            // Fallback or error handling:
-            // Option 1: Return original content if pattern is invalid
-            // return $original_content;
-            // Option 2: Log an error and return an empty string or a specific error message
-            error_log( 'FilterFlex: Invalid output pattern JSON for post ID ' . $post_id . '. Pattern: ' . $pattern_json );
             // Option 3: Attempt to use original content if the special tag {filtered_element} was the intent.
             // This is a basic fallback if the pattern was simply the filtered element.
             if ( strpos( $pattern_json, '{filtered_element}' ) !== false ) {
@@ -526,7 +534,8 @@ class FilterFlex_Filter_Application {
         if ( $tag_placeholder === '{custom_field}' ) {
             if ( isset( $tag_item['meta']['key'] ) && ! empty( $tag_item['meta']['key'] ) ) {
                 $field_key = $tag_item['meta']['key'];
-                return esc_html( get_post_meta( $post_id, $field_key, true ) );
+                $value = get_post_meta( $post_id, $field_key, true );
+                return esc_html( $value );
             }
             return ''; // No key provided for custom field
         }
@@ -552,7 +561,6 @@ class FilterFlex_Filter_Application {
 
         // If the tag is not registered or callable, return the placeholder itself or an empty string
         // Returning the placeholder can help debug if a tag is misspelled or not registered.
-        // return $tag_placeholder;
         return ''; // Or return empty string to not show unknown tags
     }
 
@@ -652,22 +660,106 @@ class FilterFlex_Filter_Application {
      * @param array  $transformations The transformations to apply.
      * @return string The transformed content.
      */
-    private function apply_transformations( $content, $transformations ) {
+    public function apply_transformations( $content, $transformations, $hook = '' ) { // Changed visibility to public
         foreach ( $transformations as $transformation ) {
             // Skip invalid transformations
             if ( ! is_array( $transformation ) || empty( $transformation['type'] ) ) {
                 continue;
             }
 
-            // Check if the transformation is registered
             $type = $transformation['type'];
-            if ( isset( $this->available_transformations[ $type ] ) && is_callable( $this->available_transformations[ $type ]['callback'] ) ) {
+
+            // Special handling for uppercase/lowercase on HTML content
+            if ( ( $type === 'uppercase' || $type === 'lowercase' ) && $hook === 'the_content' ) {
+                $content = $this->transform_case_html( $content, $type );
+            }
+            // Check if the transformation is registered and apply if not handled above
+            elseif ( isset( $this->available_transformations[ $type ] ) && is_callable( $this->available_transformations[ $type ]['callback'] ) ) {
                 $content = call_user_func( $this->available_transformations[ $type ]['callback'], $content, $transformation );
             }
         }
 
         return $content;
     }
+
+    /**
+     * Apply case transformation to text nodes within HTML content.
+     *
+     * @param string $html_content The HTML content to transform.
+     * @param string $case_type    'uppercase' or 'lowercase'.
+     * @return string The transformed HTML content.
+     */
+    private function transform_case_html( $html_content, $case_type ) {
+        if ( empty( trim( $html_content ) ) ) {
+            return $html_content;
+        }
+
+        $doc = new DOMDocument();
+        $doc->encoding = 'UTF-8';
+
+        $previous_libxml_error_use = libxml_use_internal_errors(true);
+
+        $marker_id = 'filterflex-content-wrapper-' . uniqid();
+        $html_fragment = mb_convert_encoding($html_content, 'HTML-ENTITIES', 'UTF-8');
+
+        if ( ! $doc->loadHTML('<div id="' . $marker_id . '">' . $html_fragment . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD) ) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        $xpath = new DOMXPath( $doc );
+        $textNodes = $xpath->query( '//div[@id="' . $marker_id . '"]//text()' );
+
+        if ($textNodes === false) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        foreach ( $textNodes as $textNode ) {
+            // Skip text nodes within script or style tags
+            if ( $textNode->parentNode && ($textNode->parentNode->nodeName === 'script' || $textNode->parentNode->nodeName === 'style') ) {
+                continue;
+            }
+
+            $originalText = $textNode->nodeValue;
+            $modifiedText = '';
+
+            if ( $case_type === 'uppercase' ) {
+                $modifiedText = strtoupper( $originalText );
+            } elseif ( $case_type === 'lowercase' ) {
+                $modifiedText = strtolower( $originalText );
+            } else {
+                $modifiedText = $originalText; // Should not happen with current logic, but as a fallback
+            }
+
+            if ($originalText !== $modifiedText) {
+                $textNode->nodeValue = $modifiedText;
+            }
+        }
+
+        $wrapper_node = $doc->getElementById($marker_id);
+        $processed_html = '';
+
+        if ($wrapper_node && $wrapper_node->hasChildNodes()) {
+            foreach ($wrapper_node->childNodes as $child_node) {
+                $processed_html .= $doc->saveHTML($child_node);
+            }
+        } elseif ($wrapper_node) {
+            $processed_html = '';
+        } else {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous_libxml_error_use);
+            return $html_content;
+        }
+
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous_libxml_error_use);
+
+        return $processed_html;
+    }
+
 
     /**
      * Transform content with search and replace.
