@@ -473,7 +473,7 @@ class FilterFlex {
                                     data-tag-type="<?php echo esc_attr( $tag_type ); ?>"
                                     data-tag-value="<?php echo esc_attr( $tag_placeholder ); ?>"
                                     draggable="true">
-                                    <?php echo $icon_html; ?><?php echo esc_html( $label ); ?>
+                                    <?php echo wp_kses_post( $icon_html ); ?><?php echo esc_html( $label ); ?>
                                 </span>
                             <?php endforeach; ?>
                         </div>
@@ -703,18 +703,18 @@ class FilterFlex {
 
         // --- Sanitize and Save Transformations ---
         $sanitized_transformations = [];
-         if ( isset( $_POST['filterflex_transformations'] ) && is_array( $_POST['filterflex_transformations'] ) ) {
-            $raw_transformations = sanitize_text_field(wp_unslash( $_POST['filterflex_transformations'] ));
+        if ( isset( $_POST['filterflex_transformations'] ) && is_array( $_POST['filterflex_transformations'] ) ) {
+            $raw_transformations = wp_unslash( $_POST['filterflex_transformations'] );
             foreach ( $raw_transformations as $index => $transformation ) {
-                 if ( is_array( $transformation ) && isset( $transformation['type'] ) && !empty( $transformation['type'] ) ) {
-                     $sanitized_transform = [ 'type' => sanitize_text_field( $transformation['type'] ) ];
-                     if (isset($transformation['search'])) $sanitized_transform['search'] = sanitize_text_field( $transformation['search'] );
-                     if (isset($transformation['replace'])) $sanitized_transform['replace'] = sanitize_text_field( $transformation['replace'] );
-                     if (isset($transformation['limit'])) $sanitized_transform['limit'] = absint( $transformation['limit'] );
-                     $sanitized_transformations[] = $sanitized_transform;
-                 }
+                if ( is_array( $transformation ) && isset( $transformation['type'] ) && !empty( $transformation['type'] ) ) {
+                    $sanitized_transform = [ 'type' => sanitize_text_field( $transformation['type'] ) ];
+                    if (isset($transformation['search'])) $sanitized_transform['search'] = sanitize_text_field( $transformation['search'] );
+                    if (isset($transformation['replace'])) $sanitized_transform['replace'] = sanitize_text_field( $transformation['replace'] );
+                    if (isset($transformation['limit'])) $sanitized_transform['limit'] = absint( $transformation['limit'] );
+                    $sanitized_transformations[] = $sanitized_transform;
+                }
             }
-         }
+        }
         update_post_meta( $post_id, '_filterflex_transformations', $sanitized_transformations );
 
         // --- Sanitize and Save Apply Area ---

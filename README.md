@@ -1,5 +1,7 @@
 # FilterFlex - Dynamic Content Filtering for WordPress
 
+[![FilterFlex Plugin: Use Cases Demo](https://img.youtube.com/vi/bP8EjaLEYKw/hqdefault.jpg)](https://www.youtube.com/watch?v=bP8EjaLEYKw)
+
 FilterFlex is a powerful and user-friendly WordPress plugin that allows you to dynamically modify the output of various standard WordPress elements like post titles, content, excerpts, and category names based on flexible location rules and a visual output builder.
 
 Stop writing custom PHP snippets for every conditional content change! FilterFlex empowers you to:

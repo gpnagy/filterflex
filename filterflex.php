@@ -6,8 +6,8 @@
  * Version:           1.0.0
  * Requires at least: 5.0
  * Requires PHP:      7.4
- * Author:            Your Name
- * Author URI:        https://yourwebsite.com
+ * Author:            George Nagy
+ * Author URI:        https://github.com/gpnagy/filterflex
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       filterflex
