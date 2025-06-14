@@ -1,6 +1,37 @@
 // admin/js/filterflex-admin.js
 jQuery(document).ready(function($) {
 
+    // Function to dynamically adjust the width of a select element based on its selected option's text
+    function adjustSelectWidth($selectElement) {
+        // Create a temporary span to measure text width
+        const $tempSpan = $('<span>').css({
+            'position': 'absolute',
+            'visibility': 'hidden',
+            'white-space': 'nowrap',
+            'font-family': $selectElement.css('font-family'),
+            'font-size': $selectElement.css('font-size'),
+            'font-weight': $selectElement.css('font-weight'),
+            'letter-spacing': $selectElement.css('letter-spacing'),
+            'text-transform': $selectElement.css('text-transform'),
+            'padding': $selectElement.css('padding'),
+            'border': $selectElement.css('border')
+        }).appendTo('body');
+
+        // Get the text of the selected option
+        const selectedText = $selectElement.find('option:selected').text();
+        $tempSpan.text(selectedText);
+
+        // Calculate the width and add a buffer for the dropdown arrow and padding
+        // A buffer of 30-40px is usually sufficient for the custom arrow and internal padding
+        const calculatedWidth = $tempSpan.width() + 35; // Adjust buffer as needed
+
+        // Apply the calculated width to the select element
+        $selectElement.width(calculatedWidth);
+
+        // Remove the temporary span
+        $tempSpan.remove();
+    }
+
     // Add console log to check available tags
     console.log('FilterFlex Available Tags:', filterFlexData.available_tags);
 
@@ -259,13 +290,13 @@ jQuery(document).ready(function($) {
                 // Define date format options
                 const dateFormats = {
                     '': 'WordPress Default', // Default option
-                    'Y-m-d': 'YYYY-MM-DD (e.g., 2023-10-27)',
-                    'm/d/Y': 'MM/DD/YYYY (e.g., 10/27/2023)',
-                    'd/m/Y': 'DD/MM/YYYY (e.g., 27/10/2023)',
-                    'F j, Y': 'Month D, YYYY (e.g., October 27, 2023)',
-                    'M j, y': 'Mon D, YY (e.g., Oct 27, 23)',
-                    'H:i:s': 'HH:MM:SS (24-hour)',
-                    'g:i a': 'HH:MM AM/PM (12-hour)'
+                    'Y-m-d': 'YYYY-MM-DD',
+                    'm/d/Y': 'MM/DD/YYYY',
+                    'd/m/Y': 'DD/MM/YYYY',
+                    'F j, Y': 'Month D, YYYY',
+                    'M j, y': 'Mon D, YY',
+                    'H:i:s': 'HH:MM:SS (24 hour)',
+                    'g:i a': 'HH:MM AM/PM'
                 };
 
                 // Populate the select options
@@ -277,6 +308,8 @@ jQuery(document).ready(function($) {
                 $formatSelect.val(''); // WordPress Default selected by default
 
                 $itemWrapper.append($labelSpan).append($formatSelect);
+                // Adjust width immediately after creation
+                adjustSelectWidth($formatSelect);
                 // No remove item span here, it's added later for all tags except {filtered_element}
             } else {
                 $itemWrapper.text(label);
@@ -677,7 +710,13 @@ jQuery(document).ready(function($) {
 
     // Add event handler for date format select changes
     $builderVisualInput.on('change', '.date-format-select', function() {
+        adjustSelectWidth($(this)); // Adjust width on change
         updateHiddenPatternInput();
+    });
+
+    // Initial adjustment for all existing date format selects on page load
+    $('.date-format-select').each(function() {
+        adjustSelectWidth($(this));
     });
 
     // --- Status Toggle ---

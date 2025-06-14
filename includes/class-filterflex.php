@@ -467,6 +467,9 @@ class FilterFlex {
                                 } elseif ( $tag_placeholder === '[static_text]' ) {
                                     $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-edit"></span>';
                                     $extra_class = ' filterflex-tag-static-text';
+                                } elseif ( $tag_placeholder === '{date}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-calendar"></span>';
+                                    $extra_class = ' filterflex-tag-date';
                                 }
                             ?>
                                 <span class="filterflex-tag-item draggable-tag<?php echo esc_attr( $extra_class ); ?>"
