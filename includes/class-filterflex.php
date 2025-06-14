@@ -1208,7 +1208,8 @@ class FilterFlex {
         if ( $total_posts === 0 ) {
             $add_new_url = admin_url( 'post-new.php?post_type=filterflex_filter' );
             ?>
-            <div class='filterflex-no-filters-message' style='margin: 10px 0; text-align: center; padding: 20px; background-color: #fff; border: 1px solid #ccd0d4;'>
+            <div class='filterflex-no-filters-message'>
+                <img src='<?php echo esc_url( FILTERFLEX_PLUGIN_URL . 'static/img/filterflex-logo.png' ); ?>' alt='FilterFlex Logo' class='filterflex-splash-logo'>
                 <h2><?php esc_html_e( 'Add Your First Filter', 'filterflex' ); ?></h2>
                 <p><?php esc_html_e( "It looks like you haven't created any filters yet. Get started by adding your first one!", 'filterflex' ); ?></p>
                 <a href='<?php echo esc_url( $add_new_url ); ?>' class='button button-primary button-hero'>

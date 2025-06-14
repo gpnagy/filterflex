@@ -879,3 +879,44 @@ input:not(:checked) ~ .filterflex-status-text {
     margin-top: 0;
     padding-top: 0;
 }
+
+/* Styles for the "Add Your First Filter" splash screen */
+.filterflex-no-filters-message {
+    margin: 20px auto; /* Center the box and add vertical margin */
+    text-align: center;
+    padding: 40px 20px; /* Increased padding for better look */
+    border-radius: 8px; /* Rounded corners for the box */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    max-width: 600px; /* Limit width for better presentation */
+    background: linear-gradient(to bottom, #f2d092 0%, #ffffff 100%); /* User-specified yellow to white gradient */
+    color: #333; /* Darker text for contrast */
+    border: 1px solid #ffcc80; /* Soft border matching gradient */
+}
+
+.filterflex-no-filters-message h2 {
+    font-size: 2em; /* Larger heading */
+    color: #4a4a4a;
+    margin-top: 20px; /* Space after logo */
+    margin-bottom: 10px;
+}
+
+.filterflex-no-filters-message p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.filterflex-no-filters-message .button-hero {
+    padding: 12px 25px;
+    font-size: 1.2em;
+    border-radius: 5px;
+}
+
+.filterflex-splash-logo {
+    max-width: 250px; /* Adjust size as needed */
+    height: auto;
+    display: block; /* Center the image */
+    margin: 0 auto; /* Center the image */
+    margin-bottom: 20px; /* Space between logo and heading */
+}
