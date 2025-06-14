@@ -259,7 +259,7 @@ class FilterFlex {
             '{categories}'       => [ 'label' => __( 'Categories', 'filterflex' ), 'type' => 'tag' ],
             '{tags}'             => [ 'label' => __( 'Tags (Post Tags)', 'filterflex' ), 'type' => 'tag' ],
             '{custom_field}'     => [ 'label' => __( 'Custom Field', 'filterflex' ), 'type' => 'tag', 'meta_prompt' => 'custom_field_key' ],
-            '{date}'             => [ 'label' => __( 'Date', 'filterflex' ), 'type' => 'tag' ],
+            '{date}'             => [ 'label' => __( 'Date', 'filterflex' ), 'type' => 'tag', 'has_options' => 'date_format' ],
             '{author}'           => [ 'label' => __( 'Author', 'filterflex' ), 'type' => 'tag' ],
             '[static_text]'      => [ 'label' => __( 'Static Text', 'filterflex' ), 'type' => 'text' ],
             '[separator]'        => [ 'label' => __( 'Separator', 'filterflex' ), 'type' => 'separator' ],
@@ -467,6 +467,9 @@ class FilterFlex {
                                 } elseif ( $tag_placeholder === '[static_text]' ) {
                                     $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-edit"></span>';
                                     $extra_class = ' filterflex-tag-static-text';
+                                } elseif ( $tag_placeholder === '{date}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-calendar"></span>';
+                                    $extra_class = ' filterflex-tag-date';
                                 }
                             ?>
                                 <span class="filterflex-tag-item draggable-tag<?php echo esc_attr( $extra_class ); ?>"
@@ -677,6 +680,18 @@ class FilterFlex {
                             $sanitized_item['meta'] = [
                                 'key' => sanitize_text_field($item_data['meta']['key'])
                             ];
+                        }
+
+                        // Handle date tag meta data
+                        if ($type === 'tag' && $value === '{date}' && isset($item_data['meta']['format'])) {
+                            // Ensure 'format' is a string and not empty.
+                            if (is_string($item_data['meta']['format']) && !empty(trim($item_data['meta']['format']))) {
+                                // Initialize 'meta' if it wasn't set by a previous condition (e.g. custom_field)
+                                if (!isset($sanitized_item['meta'])) {
+                                    $sanitized_item['meta'] = [];
+                                }
+                                $sanitized_item['meta']['format'] = sanitize_text_field(trim($item_data['meta']['format']));
+                            }
                         }
 
                         // Handle separator special case
@@ -961,7 +976,7 @@ class FilterFlex {
             '{categories}'       => 'Category A, Category B',
             '{tags}'             => 'Tag1, Tag2',
             '{custom_field}'     => 'Some Custom Value',
-            '{date}'             => gmdate( get_option( 'date_format' ) ),
+            // '{date}' is now handled dynamically in the loop
             '{author}'           => 'Admin User',
             // Add sample data for other tags if necessary
         ];
@@ -975,7 +990,17 @@ class FilterFlex {
                     $preview_string .= $filtered_element_sample;
                 } else {
                     // For other tags, use sample data if available, otherwise the tag value itself.
-                    $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                    if ( $item['value'] === '{date}' ) {
+                        $date_preview_format = get_option( 'date_format' ); // Default WordPress format
+                        if ( isset( $item['meta']['format'] ) && ! empty( $item['meta']['format'] ) && is_string($item['meta']['format']) ) {
+                            $date_preview_format = $item['meta']['format'];
+                        }
+                        // Use current time for preview, date_i18n for consistency if server times vary.
+                        $preview_string .= date_i18n( $date_preview_format );
+                    } else {
+                        // For all other tags, use the existing sample_data lookup
+                        $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                    }
                 }
             } elseif ( $item['type'] === 'text' ) {
                 // For static text, escape it and add to preview.
@@ -1208,7 +1233,8 @@ class FilterFlex {
         if ( $total_posts === 0 ) {
             $add_new_url = admin_url( 'post-new.php?post_type=filterflex_filter' );
             ?>
-            <div class='filterflex-no-filters-message' style='margin: 10px 0; text-align: center; padding: 20px; background-color: #fff; border: 1px solid #ccd0d4;'>
+            <div class='filterflex-no-filters-message'>
+                <img src='<?php echo esc_url( FILTERFLEX_PLUGIN_URL . 'static/img/filterflex-logo.png' ); ?>' alt='FilterFlex Logo' class='filterflex-splash-logo'>
                 <h2><?php esc_html_e( 'Add Your First Filter', 'filterflex' ); ?></h2>
                 <p><?php esc_html_e( "It looks like you haven't created any filters yet. Get started by adding your first one!", 'filterflex' ); ?></p>
                 <a href='<?php echo esc_url( $add_new_url ); ?>' class='button button-primary button-hero'>
