@@ -702,6 +702,19 @@ input:not(:checked) ~ .filterflex-status-text {
     background-color: #eaf6fb;
     border-color: #7ad0f5;
 }
+.filterflex-tag-date {
+    background-color: #e0f2f7; /* Light blue */
+    border-color: #81d4fa; /* Slightly darker blue */
+}
+
+/* Ensure date format select adjusts width dynamically */
+.date-format-select {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box; /* Include padding and border in the element's total width */
+    width: auto; /* Allow JS to control width */
+}
 
 /* Hide the postbox header for the FilterFlex settings metabox */
 .postbox#filterflex_settings_metabox .postbox-header {

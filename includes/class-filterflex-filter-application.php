@@ -554,9 +554,9 @@ class FilterFlex_Filter_Application {
         }
 
         // Check if the tag (e.g., "{categories}") is registered in our $available_tags (for default tags)
-        if ( isset( $this->available_tags[ $tag_placeholder ] ) && is_callable( $this->available_tags[ $tag_placeholder ]['callback'] ) ) {
-            // Call the registered callback for this tag
-            return call_user_func( $this->available_tags[ $tag_placeholder ]['callback'], $original_content, $post_id );
+        if ( isset( $this->available_tags[ $tag_placeholder ] ) && isset( $this->available_tags[ $tag_placeholder ]['callback'] ) && is_callable( $this->available_tags[ $tag_placeholder ]['callback'] ) ) {
+            // Pass the original content, post ID, and the full tag item (which includes meta) to the callback
+            return call_user_func( $this->available_tags[ $tag_placeholder ]['callback'], $original_content, $post_id, $tag_item );
         }
 
         // If the tag is not registered or callable, return the placeholder itself or an empty string
@@ -569,9 +569,10 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_filtered_element_tag( $original_content, $post_id ) {
+    public function process_filtered_element_tag( $original_content, $post_id, $tag_item = [] ) {
         return $original_content;
     }
 
@@ -580,9 +581,10 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_categories_tag( $original_content, $post_id ) {
+    public function process_categories_tag( $original_content, $post_id, $tag_item = [] ) {
         $categories = get_the_category( $post_id );
         if ( empty( $categories ) ) {
             return '';
@@ -597,9 +599,10 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_tags_tag( $original_content, $post_id ) {
+    public function process_tags_tag( $original_content, $post_id, $tag_item = [] ) {
         $tags = get_the_tags( $post_id );
         if ( empty( $tags ) ) {
             return '';
@@ -614,9 +617,10 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_author_tag( $original_content, $post_id ) {
+    public function process_author_tag( $original_content, $post_id, $tag_item = [] ) {
         $post = get_post( $post_id );
         if ( ! $post ) {
             return '';
@@ -631,15 +635,22 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_date_tag( $original_content, $post_id ) {
+    public function process_date_tag( $original_content, $post_id, $tag_item = [] ) {
         $post = get_post( $post_id );
         if ( ! $post ) {
             return '';
         }
 
-        return get_the_date( '', $post_id );
+        // Determine the date format
+        $date_format_to_use = ''; // Default to WordPress setting
+        if ( isset( $tag_item['meta']['format'] ) && is_string( $tag_item['meta']['format'] ) && ! empty( $tag_item['meta']['format'] ) ) {
+            $date_format_to_use = $tag_item['meta']['format'];
+        }
+
+        return get_the_date( $date_format_to_use, $post_id );
     }
 
     /**
@@ -647,9 +658,10 @@ class FilterFlex_Filter_Application {
      *
      * @param string $original_content The original content.
      * @param int    $post_id The post ID.
+     * @param array  $tag_item The tag item from the pattern, including meta.
      * @return string The processed tag.
      */
-    public function process_post_id_tag( $original_content, $post_id ) {
+    public function process_post_id_tag( $original_content, $post_id, $tag_item = [] ) {
         return (string) $post_id;
     }
 
