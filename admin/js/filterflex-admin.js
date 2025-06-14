@@ -251,6 +251,33 @@ jQuery(document).ready(function($) {
                     .attr('placeholder', 'Enter field name');
                 
                 $itemWrapper.append($labelSpan).append($metaInput);
+            } else if (value === '{date}') {
+                $itemWrapper.attr('data-tag', '{date}'); // Store the tag value
+                const $labelSpan = $('<span>').addClass('tag-label').text('Date Format: ');
+                const $formatSelect = $('<select>').addClass('date-format-select');
+
+                // Define date format options
+                const dateFormats = {
+                    '': 'WordPress Default', // Default option
+                    'Y-m-d': 'YYYY-MM-DD (e.g., 2023-10-27)',
+                    'm/d/Y': 'MM/DD/YYYY (e.g., 10/27/2023)',
+                    'd/m/Y': 'DD/MM/YYYY (e.g., 27/10/2023)',
+                    'F j, Y': 'Month D, YYYY (e.g., October 27, 2023)',
+                    'M j, y': 'Mon D, YY (e.g., Oct 27, 23)',
+                    'H:i:s': 'HH:MM:SS (24-hour)',
+                    'g:i a': 'HH:MM AM/PM (12-hour)'
+                };
+
+                // Populate the select options
+                $.each(dateFormats, function(formatVal, formatText) {
+                    $formatSelect.append($('<option>', { value: formatVal, text: formatText }));
+                });
+
+                // Set a default selected format if needed, e.g., WordPress Default
+                $formatSelect.val(''); // WordPress Default selected by default
+
+                $itemWrapper.append($labelSpan).append($formatSelect);
+                // No remove item span here, it's added later for all tags except {filtered_element}
             } else {
                 $itemWrapper.text(label);
             }
@@ -318,6 +345,13 @@ jQuery(document).ready(function($) {
                         tagData.meta = { key: metaKey };
                         console.log('Tag data with meta:', tagData); // Debug log
                     }
+                } else if (tagValue === '{date}') {
+                    const formatVal = $item.find('.date-format-select').val();
+                    // Only add meta if a specific format is chosen (not the default WP one which is empty string)
+                    if (formatVal !== '') {
+                         tagData.meta = { format: formatVal };
+                    }
+                    // If formatVal is '', no meta.format is added, PHP will use default.
                 }
                 
                 patternData.push(tagData);
@@ -365,6 +399,11 @@ jQuery(document).ready(function($) {
                     $newElement = createBuilderElement('tag', tagValue, baseLabel);
                     // Set the meta key value in the input
                     $newElement.find('.custom-field-meta-input').val(metaKey);
+                } else if (tagValue === '{date}') {
+                    const baseLabel = filterFlexData.available_tags['{date}']?.label || 'Date';
+                    $newElement = createBuilderElement('tag', tagValue, baseLabel); // createBuilderElement will now add the select
+                    const savedFormat = item.meta?.format || ''; // Default to empty string (WP Default) if not set
+                    $newElement.find('.date-format-select').val(savedFormat);
                 } else {
                     // For other tags
                     const $foundTag = $availableTagsContainer.find(`.draggable-tag[data-tag-value="${item.value}"]`);
@@ -633,6 +672,11 @@ jQuery(document).ready(function($) {
 
     // Add event handler for custom field meta input changes
     $builderVisualInput.on('input change', '.custom-field-meta-input', function() {
+        updateHiddenPatternInput();
+    });
+
+    // Add event handler for date format select changes
+    $builderVisualInput.on('change', '.date-format-select', function() {
         updateHiddenPatternInput();
     });
 

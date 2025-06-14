@@ -259,7 +259,7 @@ class FilterFlex {
             '{categories}'       => [ 'label' => __( 'Categories', 'filterflex' ), 'type' => 'tag' ],
             '{tags}'             => [ 'label' => __( 'Tags (Post Tags)', 'filterflex' ), 'type' => 'tag' ],
             '{custom_field}'     => [ 'label' => __( 'Custom Field', 'filterflex' ), 'type' => 'tag', 'meta_prompt' => 'custom_field_key' ],
-            '{date}'             => [ 'label' => __( 'Date', 'filterflex' ), 'type' => 'tag' ],
+            '{date}'             => [ 'label' => __( 'Date', 'filterflex' ), 'type' => 'tag', 'has_options' => 'date_format' ],
             '{author}'           => [ 'label' => __( 'Author', 'filterflex' ), 'type' => 'tag' ],
             '[static_text]'      => [ 'label' => __( 'Static Text', 'filterflex' ), 'type' => 'text' ],
             '[separator]'        => [ 'label' => __( 'Separator', 'filterflex' ), 'type' => 'separator' ],
@@ -679,6 +679,18 @@ class FilterFlex {
                             ];
                         }
 
+                        // Handle date tag meta data
+                        if ($type === 'tag' && $value === '{date}' && isset($item_data['meta']['format'])) {
+                            // Ensure 'format' is a string and not empty.
+                            if (is_string($item_data['meta']['format']) && !empty(trim($item_data['meta']['format']))) {
+                                // Initialize 'meta' if it wasn't set by a previous condition (e.g. custom_field)
+                                if (!isset($sanitized_item['meta'])) {
+                                    $sanitized_item['meta'] = [];
+                                }
+                                $sanitized_item['meta']['format'] = sanitize_text_field(trim($item_data['meta']['format']));
+                            }
+                        }
+
                         // Handle separator special case
                         if ($type === 'separator') {
                             if ($value === "__{{SPACE}}__") {
@@ -961,7 +973,7 @@ class FilterFlex {
             '{categories}'       => 'Category A, Category B',
             '{tags}'             => 'Tag1, Tag2',
             '{custom_field}'     => 'Some Custom Value',
-            '{date}'             => gmdate( get_option( 'date_format' ) ),
+            // '{date}' is now handled dynamically in the loop
             '{author}'           => 'Admin User',
             // Add sample data for other tags if necessary
         ];
@@ -975,7 +987,17 @@ class FilterFlex {
                     $preview_string .= $filtered_element_sample;
                 } else {
                     // For other tags, use sample data if available, otherwise the tag value itself.
-                    $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                    if ( $item['value'] === '{date}' ) {
+                        $date_preview_format = get_option( 'date_format' ); // Default WordPress format
+                        if ( isset( $item['meta']['format'] ) && ! empty( $item['meta']['format'] ) && is_string($item['meta']['format']) ) {
+                            $date_preview_format = $item['meta']['format'];
+                        }
+                        // Use current time for preview, date_i18n for consistency if server times vary.
+                        $preview_string .= date_i18n( $date_preview_format );
+                    } else {
+                        // For all other tags, use the existing sample_data lookup
+                        $preview_string .= $sample_data[ $item['value'] ] ?? $item['value'];
+                    }
                 }
             } elseif ( $item['type'] === 'text' ) {
                 // For static text, escape it and add to preview.
