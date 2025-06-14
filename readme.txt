@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A plugin for applying filters to WordPress elements with custom field support and dynamic tag replacement.
+A powerful plugin for applying filters to various WordPress elements with custom field support and dynamic tag replacement.
 
 == Description ==
 
