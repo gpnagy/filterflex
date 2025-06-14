@@ -12,6 +12,8 @@ A powerful plugin for applying filters to various WordPress elements with custom
 
 == Description ==
 
+https://www.youtube.com/watch?v=bP8EjaLEYKw
+
 FilterFlex allows you to modify how WordPress displays various elements like titles, content, excerpts, and more. Create sophisticated filters with custom field integration, taxonomy support, and dynamic tag replacement.
 
 Key Features:
@@ -46,8 +48,8 @@ Yes, FilterFlex includes full support for custom fields with an easy-to-use inte
 
 == Screenshots ==
 
-1. Main filter editing interface
-2. Location rules configuration
+1. Filter listing
+2. Main filter editing interface
 3. Output builder with available tags
 4. Settings page
 
