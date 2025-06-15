@@ -3,7 +3,7 @@ Contributors: gpnagy
 Tags: filter, content-filter, custom-fields, taxonomy, categories
 Requires at least: 5.0
 Tested up to: 6.8
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -55,10 +55,28 @@ Yes, FilterFlex includes full support for custom fields with an easy-to-use inte
 
 == Changelog ==
 
+= 1.1.2 =
+* Added icons to available tags
+
+= 1.1.1 =
+* Fixed missing image
+* Removed unnecessary files
+
+= 1.1.0 =
+* Added custom date format option for output builder
+* Implemented date tag format customization in output builder
+* Improved styling for the "Add Your First Filter" screen
+
 = 1.0.0 =
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.1.1 =
+Maintenance release with minor fixes and file cleanup.
+
+= 1.1.0 =
+Introduced date tag format customization and UI improvements.
 
 = 1.0.0 =
 Initial release of FilterFlex

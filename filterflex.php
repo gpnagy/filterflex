@@ -3,7 +3,7 @@
  * Plugin Name:       FilterFlex
  * Plugin URI:        https://wordpress.org/plugins/filterflex
  * Description:       A powerful plugin for applying filters to various WordPress elements with custom field support and dynamic tag replacement.
- * Version:           1.1.1
+ * Version:           1.1.2
  * Requires at least: 5.0
  * Requires PHP:      7.4
  * Author:            George Nagy

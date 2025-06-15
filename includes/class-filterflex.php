@@ -470,6 +470,21 @@ class FilterFlex {
                                 } elseif ( $tag_placeholder === '{date}' ) {
                                     $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-calendar"></span>';
                                     $extra_class = ' filterflex-tag-date';
+                                } elseif ( $tag_placeholder === '{categories}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-category"></span>';
+                                    $extra_class = ' filterflex-tag-categories';
+                                } elseif ( $tag_placeholder === '{tags}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-tag"></span>';
+                                    $extra_class = ' filterflex-tag-tags';
+                                } elseif ( $tag_placeholder === '{custom_field}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-welcome-widgets-menus"></span>';
+                                    $extra_class = ' filterflex-tag-custom-field';
+                                } elseif ( $tag_placeholder === '{filtered_element}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-admin-post"></span>';
+                                    $extra_class = ' filterflex-tag-filtered-element';
+                                } elseif ( preg_match( '/^\{taxonomy:(.+)\}$/', $tag_placeholder ) ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-tag"></span>';
+                                    $extra_class = ' filterflex-tag-taxonomy';
                                 }
                             ?>
                                 <span class="filterflex-tag-item draggable-tag<?php echo esc_attr( $extra_class ); ?>"

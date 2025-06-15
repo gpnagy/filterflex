@@ -706,6 +706,10 @@ input:not(:checked) ~ .filterflex-status-text {
     background-color: #e0f2f7; /* Light blue */
     border-color: #81d4fa; /* Slightly darker blue */
 }
+.filterflex-tag-custom-field {
+    background-color: #f0e0f7; /* Light purple */
+    border-color: #d481fa; /* Slightly darker purple */
+}
 
 /* Ensure date format select adjusts width dynamically */
 .date-format-select {

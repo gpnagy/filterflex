@@ -262,7 +262,7 @@ jQuery(document).ready(function($) {
     const $availableTagsContainer = $('.filterflex-available-tags .filterflex-tags-list');
 
     // Function to create a tag element or a text input element for the builder
-    function createBuilderElement(type, value, label = '') {
+    function createBuilderElement(type, value, label = '', iconHtml = '') { // Added iconHtml parameter
         const $itemWrapper = $('<span>')
             .addClass('filterflex-builder-item');
 
@@ -270,6 +270,10 @@ jQuery(document).ready(function($) {
             $itemWrapper.addClass('filterflex-tag-item')
                 .attr('data-tag', value);
             
+            if (iconHtml) { // Prepend icon if provided
+                $itemWrapper.append(iconHtml);
+            }
+
             // Special handling for custom field tag
             if (value === '{custom_field}') {
                 // Store the tag value as data attribute
@@ -445,7 +449,9 @@ jQuery(document).ready(function($) {
                     } else {
                         label = item.value.replace(/[{}]/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     }
-                    $newElement = createBuilderElement('tag', tagValue, label);
+                    // Get icon HTML from filterFlexData.available_tags
+                    const iconHtml = filterFlexData.available_tags[tagValue]?.icon_html || '';
+                    $newElement = createBuilderElement('tag', tagValue, label, iconHtml);
                 }
                 $builderVisualInput.append($newElement);
             } else if (item.type === 'text') {
@@ -776,17 +782,18 @@ jQuery(document).ready(function($) {
             const itemType = $draggedItem.data('tag-type');
             const itemValue = $draggedItem.data('tag-value');
             const itemLabel = $draggedItem.text().trim(); // Get the text content for label
+            const itemIconHtml = $draggedItem.find('.filterflex-tag-icon').prop('outerHTML') || ''; // Get icon HTML
 
             // Determine where to insert the new element
             const $target = $(event.target);
 
             // If dropping onto an existing builder item, insert before it.
             if ($target.hasClass('filterflex-builder-item')) {
-                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel, itemIconHtml);
                 $newElement.insertBefore($target);
             } else {
                 // Otherwise, append to the end of the builder area.
-                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel, itemIconHtml);
                 $builderVisualInput.append($newElement);
             }
 
