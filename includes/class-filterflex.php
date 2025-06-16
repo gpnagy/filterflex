@@ -476,6 +476,9 @@ class FilterFlex {
                                 } elseif ( $tag_placeholder === '{tags}' ) {
                                     $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-tag"></span>';
                                     $extra_class = ' filterflex-tag-tags';
+                                } elseif ( $tag_placeholder === '{author}' ) {
+                                    $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-admin-users"></span>';
+                                    $extra_class = ' filterflex-tag-author';
                                 } elseif ( $tag_placeholder === '{custom_field}' ) {
                                     $icon_html = '<span class="filterflex-tag-icon dashicons dashicons-welcome-widgets-menus"></span>';
                                     $extra_class = ' filterflex-tag-custom-field';
