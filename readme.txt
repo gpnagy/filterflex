@@ -55,6 +55,11 @@ Yes, FilterFlex includes full support for custom fields with an easy-to-use inte
 
 == Changelog ==
 
+= 1.2.0 =
+* New Location Rule: Logged-In Status
+* New Location Rule: Specific User
+* New Location Rule: Page Parent
+
 = 1.1.2 =
 * Added icons to available tags
 
