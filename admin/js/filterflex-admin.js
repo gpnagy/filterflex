@@ -103,7 +103,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 $valueSelect.empty(); // Clear loading indicator
 
-                if (response.success && response.data.values && Object.keys(response.data.values).length > 0) {
+                if (response.success && response.data.values && typeof response.data.values === 'object' && Object.keys(response.data.values).length > 0) {
+                    $valueSelect.prop('disabled', false); // Enable before populating
                     $valueSelect.append($('<option>', { value: '', text: filterFlexData.i18n?.selectValue || '-- Select Value --' }));
                     $.each(response.data.values, function(value, label) {
                         $valueSelect.append($('<option>', {
@@ -118,16 +119,14 @@ jQuery(document).ready(function($) {
                         $valueSelect.val(savedVal);
                     } else if ((!initialLoad || (initialLoad && savedVal === null)) && param === 'post_type' && response.data.values.hasOwnProperty('post')) {
                          $valueSelect.val('post'); // Set default to 'Posts'
-                    }
-                    else {
+                    } else {
                          $valueSelect.val(''); // Select default if no saved value or not found
                     }
-                     $valueSelect.show();
+                    $valueSelect.show();
                 } else {
-                    // No options returned or error
-                    $valueSelect.append($('<option>', { value: '', text: filterFlexData.i18n?.noOptions || '-- N/A --' }));
-                    // Keep it hidden or show N/A? Let's show N/A but keep it disabled-like
-                     $valueSelect.show().prop('disabled', true); // Visually indicate no options
+                    // No options returned or error from PHP (response.data.values is null or empty)
+                    $valueSelect.append($('<option>', { value: '', text: response.data?.message || filterFlexData.i18n?.noOptions || '-- N/A --' }));
+                    $valueSelect.show().prop('disabled', true);
                  }
              },
              error: function(jqXHR, textStatus, errorThrown) {
@@ -138,20 +137,15 @@ jQuery(document).ready(function($) {
                  const errorMsg = filterFlexData.i18n?.ajaxError || 'Error loading options';
                  $valueSelect.append($('<option>', { value: '', text: errorMsg })).show().prop('disabled', true);
              },
-             complete: function() {
-                 // Re-enable dropdown if it was disabled
-                 if ($valueSelect.prop('disabled')) {
-                     // Only re-enable if options were actually loaded successfully
-                     if ($valueSelect.find('option').length > 1) { // More than just the default/error option
-                         $valueSelect.prop('disabled', false);
-                     }
-                 }
-                 // Clear the saved value data attribute after using it on initial load
-                 // Although it might not be strictly necessary to remove it
-                 // if (initialLoad) {
-                 //    $valueSelect.removeData('saved-value');
-                 // }
-            }
+            // complete: function() {
+            //     // Re-enable dropdown if it was disabled
+            //     if ($valueSelect.prop('disabled')) {
+            //         // Only re-enable if options were actually loaded successfully
+            //         if ($valueSelect.find('option').length > 1 && $valueSelect.find('option[value=""]').text() !== (filterFlexData.i18n?.noOptions || '-- N/A --')) {
+            //             $valueSelect.prop('disabled', false);
+            //         }
+            //     }
+            // }
         });
     }
 
@@ -262,7 +256,7 @@ jQuery(document).ready(function($) {
     const $availableTagsContainer = $('.filterflex-available-tags .filterflex-tags-list');
 
     // Function to create a tag element or a text input element for the builder
-    function createBuilderElement(type, value, label = '') {
+    function createBuilderElement(type, value, label = '', iconHtml = '') { // Added iconHtml parameter
         const $itemWrapper = $('<span>')
             .addClass('filterflex-builder-item');
 
@@ -270,6 +264,10 @@ jQuery(document).ready(function($) {
             $itemWrapper.addClass('filterflex-tag-item')
                 .attr('data-tag', value);
             
+            if (iconHtml) { // Prepend icon if provided
+                $itemWrapper.append(iconHtml);
+            }
+
             // Special handling for custom field tag
             if (value === '{custom_field}') {
                 // Store the tag value as data attribute
@@ -445,7 +443,9 @@ jQuery(document).ready(function($) {
                     } else {
                         label = item.value.replace(/[{}]/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                     }
-                    $newElement = createBuilderElement('tag', tagValue, label);
+                    // Get icon HTML from filterFlexData.available_tags
+                    const iconHtml = filterFlexData.available_tags[tagValue]?.icon_html || '';
+                    $newElement = createBuilderElement('tag', tagValue, label, iconHtml);
                 }
                 $builderVisualInput.append($newElement);
             } else if (item.type === 'text') {
@@ -776,17 +776,18 @@ jQuery(document).ready(function($) {
             const itemType = $draggedItem.data('tag-type');
             const itemValue = $draggedItem.data('tag-value');
             const itemLabel = $draggedItem.text().trim(); // Get the text content for label
+            const itemIconHtml = $draggedItem.find('.filterflex-tag-icon').prop('outerHTML') || ''; // Get icon HTML
 
             // Determine where to insert the new element
             const $target = $(event.target);
 
             // If dropping onto an existing builder item, insert before it.
             if ($target.hasClass('filterflex-builder-item')) {
-                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel, itemIconHtml);
                 $newElement.insertBefore($target);
             } else {
                 // Otherwise, append to the end of the builder area.
-                const $newElement = createBuilderElement(itemType, itemValue, itemLabel);
+                const $newElement = createBuilderElement(itemType, itemValue, itemLabel, itemIconHtml);
                 $builderVisualInput.append($newElement);
             }
 
