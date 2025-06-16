@@ -188,6 +188,21 @@ function filterflex_ajax_get_location_values() {
                     '404'        => __( '404 Not Found', 'filterflex' ),
                 ];
                 break;
+            case 'logged_in_status':
+                $values = [ 'logged_in' => __( 'Logged In', 'filterflex' ), 'logged_out' => __( 'Logged Out', 'filterflex' ) ];
+                break;
+            case 'specific_user':
+                $users = get_users();
+                foreach ( $users as $user ) {
+                    $values[ $user->ID ] = $user->display_name;
+                }
+                break;
+            case 'page_parent':
+                $pages = get_pages();
+                foreach ( $pages as $page ) {
+                    $values[ $page->ID ] = $page->post_title;
+                }
+                break;
             default:
                 $values = apply_filters( 'filterflex_ajax_location_values', [], $param );
                 break;
