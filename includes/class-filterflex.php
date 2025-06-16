@@ -571,16 +571,16 @@ class FilterFlex {
     private function get_location_rules_config() {
         $config = [
             'params' => [
-                'post_type'     => __( 'Post Type', 'filterflex' ),
-                'page_template' => __( 'Page Template', 'filterflex' ),
-                'page'          => __( 'Page', 'filterflex' ),
-                'page_parent'   => __( 'Page Parent', 'filterflex' ),
-                'post'          => __( 'Post', 'filterflex' ),
-                'post_category' => __( 'Post Category', 'filterflex' ),
-                'user_role'     => __( 'User Role', 'filterflex' ),
-                'page_type'     => __( 'Page Type', 'filterflex' ),
+                'post'             => __( 'Post', 'filterflex' ),
+                'post_category'    => __( 'Post Category', 'filterflex' ),
+                'post_type'        => __( 'Post Type', 'filterflex' ),
+                'page'             => __( 'Page', 'filterflex' ),
+                'page_parent'      => __( 'Page Parent', 'filterflex' ),
+                'page_type'        => __( 'Page Type', 'filterflex' ),
+                'user_role'        => __( 'User Role', 'filterflex' ),
                 'logged_in_status' => __( 'Logged-in Status', 'filterflex' ),
-                'specific_user' => __( 'Specific User', 'filterflex' ),
+                'specific_user'    => __( 'Specific User', 'filterflex' ),
+                'page_template'    => __( 'Page Template', 'filterflex' ),
             ],
             'operators' => [
                 '==' => __('is equal to', 'filterflex'),
