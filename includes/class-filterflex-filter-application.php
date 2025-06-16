@@ -411,8 +411,10 @@ class FilterFlex_Filter_Application {
 
         // Check the operator
         switch ( $operator ) {
+            case 'is':
             case '==':
                 return $actual_value == $value;
+            case 'is_not':
             case '!=':
                 return $actual_value != $value;
             default:
@@ -456,6 +458,16 @@ class FilterFlex_Filter_Application {
             case 'term_id':
                 $terms = get_the_terms( get_the_ID(), get_query_var( 'taxonomy' ) );
                 return ! empty( $terms ) ? $terms[0]->term_id : '';
+            case 'logged_in_status':
+                return is_user_logged_in() ? 'logged_in' : 'logged_out';
+            case 'specific_user':
+                return (string) get_current_user_id();
+            case 'page_parent':
+                $post = get_post();
+                if ( $post && is_post_type_hierarchical( $post->post_type ) ) {
+                    return (string) $post->post_parent;
+                }
+                return '0';
             default:
                 // Allow custom parameters via filter
                 return apply_filters( 'filterflex_param_value', null, $param );
