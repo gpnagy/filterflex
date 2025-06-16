@@ -574,14 +574,19 @@ class FilterFlex {
                 'post_type'     => __( 'Post Type', 'filterflex' ),
                 'page_template' => __( 'Page Template', 'filterflex' ),
                 'page'          => __( 'Page', 'filterflex' ),
+                'page_parent'   => __( 'Page Parent', 'filterflex' ),
                 'post'          => __( 'Post', 'filterflex' ),
                 'post_category' => __( 'Post Category', 'filterflex' ),
                 'user_role'     => __( 'User Role', 'filterflex' ),
                 'page_type'     => __( 'Page Type', 'filterflex' ),
+                'logged_in_status' => __( 'Logged-in Status', 'filterflex' ),
+                'specific_user' => __( 'Specific User', 'filterflex' ),
             ],
             'operators' => [
                 '==' => __('is equal to', 'filterflex'),
                 '!=' => __('is not equal to', 'filterflex'),
+                'is' => __('is', 'filterflex'),
+                'is_not' => __('is not', 'filterflex'),
             ],
         ];
         return [
@@ -922,6 +927,21 @@ class FilterFlex {
                  $categories = get_categories(['hide_empty' => false]);
                  foreach ($categories as $category) { $values[$category->term_id] = $category->name; }
                  break;
+            case 'logged_in_status':
+                $values = [ 'logged_in' => __( 'Logged In', 'filterflex' ), 'logged_out' => __( 'Logged Out', 'filterflex' ) ];
+                break;
+            case 'specific_user':
+                $users = get_users();
+                foreach ( $users as $user ) {
+                    $values[ $user->ID ] = $user->display_name;
+                }
+                break;
+            case 'page_parent':
+                $pages = get_pages();
+                foreach ( $pages as $page ) {
+                    $values[ $page->ID ] = $page->post_title;
+                }
+                break;
             default:
                 $values = apply_filters( "filterflex_location_values_{$param}", [] );
                 break;
