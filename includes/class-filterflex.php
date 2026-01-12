@@ -808,8 +808,8 @@ class FilterFlex {
      * Enqueue scripts and styles.
      */
     public function enqueue_scripts() {
-        wp_enqueue_style( 'filterflex-style', FILTERFLEX_PLUGIN_URL . 'public/css/filterflex.css', array(), $this->version );
-        wp_enqueue_script( 'filterflex-script', FILTERFLEX_PLUGIN_URL . 'public/js/filterflex.js', array( 'jquery' ), $this->version, true );
+        // wp_enqueue_style( 'filterflex-style', FILTERFLEX_PLUGIN_URL . 'public/css/filterflex.css', array(), $this->version );
+        // wp_enqueue_script( 'filterflex-script', FILTERFLEX_PLUGIN_URL . 'public/js/filterflex.js', array( 'jquery' ), $this->version, true );
     }
     
     /**
