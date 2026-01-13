@@ -2,6 +2,12 @@
 /**
  * Main FilterFlex plugin class.
  */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 class FilterFlex {
 
     /**

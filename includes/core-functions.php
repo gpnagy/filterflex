@@ -3,6 +3,11 @@
  * Core functions for the FilterFlex plugin.
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 // Add any global functions here.
 
 add_action( 'rest_api_init', 'filterflex_register_rest_routes' );
