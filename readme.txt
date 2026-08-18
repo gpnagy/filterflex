@@ -2,8 +2,8 @@
 Contributors: gpnagy
 Tags: filter, content-filter, custom-fields, taxonomy, categories
 Requires at least: 5.0
-Tested up to: 6.9
-Stable tag: 1.2.1
+Tested up to: 7.0.4
+Stable tag: 1.2.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -54,6 +54,12 @@ Yes, FilterFlex includes full support for custom fields with an easy-to-use inte
 4. Settings page
 
 == Changelog ==
+
+= 1.2.2 =
+* Added check to prevent direct access to some files
+
+= 1.2.1 =
+* Removed unused frontend JS and CSS
 
 = 1.2.0 =
 * New Location Rule: Logged-In Status
